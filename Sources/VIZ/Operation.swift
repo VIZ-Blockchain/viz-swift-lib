@@ -953,10 +953,10 @@ public struct Operation {
         public let reward: Asset
     }
 
-    public struct ProducerReward: OperationType, Equatable {
+    public struct WitnessReward: OperationType, Equatable {
         public var isVirtual: Bool { return true }
-        public let producer: String
-        public let vestingShares: Asset
+        public let witness: String
+        public let shares: Asset
     }
 
     /// Unknown operation, seen if the decoder encounters operation which has no type defined.
@@ -1133,7 +1133,7 @@ internal struct AnyOperation: VIZEncodable, Decodable {
         case .shutdown_witness: op = try container.decode(Operation.ShutdownWitness.self)
         case .hardfork: op = try container.decode(Operation.Hardfork.self)
         case .return_vesting_delegation: op = try container.decode(Operation.ReturnVestingDelegation.self)
-        case .witness_reward: op = try container.decode(Operation.ProducerReward.self)
+        case .witness_reward: op = try container.decode(Operation.WitnessReward.self)
         case .create_invite: op = Operation.Unknown()
         case .claim_invite_balance: op = Operation.Unknown()
         case .invite_registration: op = try container.decode(Operation.InviteRegistration.self)

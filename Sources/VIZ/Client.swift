@@ -1,7 +1,6 @@
 /// JSON-RPC 2.0 client.
 /// - Author: Johan Nordberg <johan@steemit.com>
 
-import AnyCodable
 import Foundation
 
 /// JSON-RPC 2.0 request type.
@@ -417,3 +416,4 @@ extension Client {
         """
     )
 #endif
+

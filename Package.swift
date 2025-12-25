@@ -10,10 +10,6 @@ let package = Package(
     ],
     dependencies: [
         .package(
-            url: "https://github.com/Flight-School/AnyCodable.git", 
-            from: "0.6.0"
-        ),
-        .package(
             url: "https://github.com/lukaskubanek/OrderedDictionary.git", 
             from: "4.0.0"
         ),
@@ -26,7 +22,7 @@ let package = Package(
         ),
         .target(
             name: "VIZ",
-            dependencies: ["Crypto", "AnyCodable", "OrderedDictionary", "secp256k1gm"]
+            dependencies: ["Crypto", "OrderedDictionary", "secp256k1gm"]
         ),
         .testTarget(
             name: "UnitTests",

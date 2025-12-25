@@ -1,4 +1,3 @@
-import AnyCodable
 @testable import VIZ
 import XCTest
 
@@ -79,7 +78,7 @@ class ClientTest: XCTestCase {
         let test = expectation(description: "Handler called")
         session.nextResponse = jsonResponse(["id": 42, "result": "foo"])
         var req = TestRequest()
-        req.params = RequestParams(["hello"])
+        req.params = RequestParams<AnyEncodable>([AnyEncodable(["hello"])])
         client.send(req) { response, error in
             XCTAssertNil(error)
             XCTAssertEqual(response, "foo")

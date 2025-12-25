@@ -2,7 +2,6 @@
 /// - Author: Johan Nordberg <johan@steemit.com>
 /// - Author: Iain Maitland <imaitland@steemit.com>
 
-import AnyCodable
 import Foundation
 
 /// VIZ RPC API request- and response-types.
@@ -179,3 +178,4 @@ public struct API {
         }
     }
 }
+

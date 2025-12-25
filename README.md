@@ -1,19 +1,31 @@
 # viz-swift-lib
 
-![Tests badge](https://github.com/VIZ-Blockchain/viz-swift-lib/actions/workflows/tests.yml/badge.svg?branch=master)
+VIZ library for the Swift language — build and encode operations, compose transactions, compute digests, and sign them with secp256k1 for the VIZ blockchain.
 
-VIZ library for Swift language
+![Tests badge](https://github.com/VIZ-Blockchain/viz-swift-lib/actions/workflows/tests.yml/badge.svg?branch=master)
+[![Swift](https://img.shields.io/badge/Swift-5.5%2B-orange.svg)](https://swift.org)
+![Platforms](https://img.shields.io/badge/platforms-iOS%20|%20macOS%20|%20tvOS%20|%20watchOS%20|%20Linux-blue.svg)
+[![License](https://img.shields.io/badge/License-MIT-lightgrey.svg)](#license)
+
+What is this?
+-------------
+A lightweight, type-safe Swift toolkit for VIZ blockchain:
+- VIZ binary wire encoding via `VIZEncoder`
+- Strongly-typed operations under `Operation.*` (e.g. Transfer, Content, Vote, Award, InviteRegistration, and more)
+- Transaction building (`Transaction`) and signing (`SignedTransaction`)
+- Chain selection with `ChainId` (mainNet, testNet, custom)
+- Keys and crypto: `PrivateKey`, `PublicKey`, `Signature` (secp256k1)
+- Codable conformance for JSON interop, plus Equatable transactions using digest equality
 
 Installation
 ------------
-
-Using the [Swift package manager](https://swift.org/package-manager/):
+Using the [Swift Package Manager](https://swift.org/package-manager/):
 
 In your `Package.swift` just add:
 
 ```
 dependencies: [
-    .package(url: "https://github.com/viz-blockchain/viz-swift-lib.git", .branch("master"))
+    .package(url: "https://github.com/viz-blockchain/viz-swift-lib.git", .upToNextMinor(from: "0.0.3"))
 ]
 ```
 

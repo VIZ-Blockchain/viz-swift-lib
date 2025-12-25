@@ -1,7 +1,6 @@
 /// VIZ transaction type.
 /// - Author: Johan Nordberg <johan@steemit.com>
 
-import AnyCodable
 import Foundation
 
 fileprivate protocol _Transaction: VIZEncodable, Decodable {

@@ -155,7 +155,6 @@ internal struct ResponseError: Decodable {
         let code: Int
         let name: String
         let message: String
-        //let stack: [DataErrorStack]
     }
     
     let code: Int
@@ -177,41 +176,28 @@ internal struct ResponseErrorPayload<T: Request>: Decodable {
 
 
 /// URLSession adapter, for testability.
-internal protocol SessionAdapter {
-    func dataTask(with request: URLRequest, completionHandler: @escaping (Data?, URLResponse?, Error?) -> Void) -> SessionDataTask
+public protocol SessionAdapter: Sendable {
+    func dataTask(
+        with request: URLRequest,
+        completionHandler: @escaping (Data?, URLResponse?, Error?) -> Void
+    ) -> SessionDataTask
 }
 
-internal protocol SessionDataTask {
+
+public protocol SessionDataTask {
     func resume()
 }
 
 extension URLSessionDataTask: SessionDataTask {}
 extension URLSession: SessionAdapter {
-    internal func dataTask(with request: URLRequest, completionHandler: @escaping (Data?, URLResponse?, Error?) -> Void) -> SessionDataTask {
+    public func dataTask(with request: URLRequest, completionHandler: @escaping (Data?, URLResponse?, Error?) -> Void) -> SessionDataTask {
         let task: URLSessionDataTask = self.dataTask(with: request, completionHandler: completionHandler)
         return task as SessionDataTask
     }
 }
 
-/// JSON-RPC 2.0 ID number generator
-internal protocol IdGenerator {
-    mutating func next() -> Int
-}
-
-/// JSON-RPC 2.0 Sequential ID number generator
-internal struct SeqIdGenerator: IdGenerator, @unchecked Sendable {
-    private var seq: Int = 1
-    public init() {}
-    public mutating func next() -> Int {
-        defer {
-            seq += 1
-        }
-        return self.seq
-    }
-}
-
 /// VIZ-flavoured JSON-RPC 2.0 client.
-public class Client {
+public actor Client {
     /// All errors `Client` can throw.
     public enum Error: LocalizedError {
         /// Unable to send request or invalid response from server.
@@ -240,15 +226,26 @@ public class Client {
     /// The RPC Server address.
     public let address: URL
 
-    internal var idgen: IdGenerator = SeqIdGenerator()
+    private var nextId: Int = 1
+    private let fixedId: Int?
+    
     internal var session: SessionAdapter
 
     /// Create a new client instance.
     /// - Parameter address: The rpc server to connect to.
     /// - Parameter session: The session to use when sending requests to the server.
-    public init(address: URL, session: URLSession = URLSession.shared) {
+    public init(address: URL, session: SessionAdapter = URLSession.shared, fixedId: Int? = nil) {
         self.address = address
         self.session = session as SessionAdapter
+        self.fixedId = fixedId
+    }
+    
+    private func generateId() -> Int {
+        if let fixedId {
+            return fixedId
+        }
+        defer { nextId += 1 }
+        return nextId
     }
 
     /// Return a URLRequest for a JSON-RPC 2.0 request payload.
@@ -302,11 +299,12 @@ public class Client {
         return responsePayload.result
     }
 
-    /// Send a JSON-RPC 2.0 request.
+    /// Old way to send a JSON-RPC 2.0 request.
     /// - Parameter request: The request to be sent.
     /// - Parameter completionHandler: Callback function, called with either a response or an error.
+    @available(*, deprecated, message: "Use async send(_:)")
     public func send<T: Request>(_ request: T, completionHandler: @escaping (T.Response?, Swift.Error?) -> Void) -> Void {
-        let payload = RequestPayload(request: request, id: self.idgen.next())
+        let payload = RequestPayload(request: request, id: self.generateId())
         let urlRequest: URLRequest
         do {
             urlRequest = try self.urlRequest(for: payload)
@@ -326,9 +324,43 @@ public class Client {
             completionHandler(rv, nil)
         }.resume()
     }
+    
+    /// Send a JSON-RPC 2.0 request.
+    /// - Parameter request: The request to be sent.
+    @available(macOS 10.15, *)
+    public func send<T: Request>(_ request: T) async throws -> T.Response {
+        let payload = RequestPayload(request: request, id: self.generateId())
+        let urlRequest = try self.urlRequest(for: payload)
+        
+        return try await withCheckedThrowingContinuation { continuation in
+            self.session.dataTask(with: urlRequest) { data, response, error in
+                if let error {
+                    return continuation.resume(
+                        throwing: Error.networkError(
+                            message: "Unable to send request",
+                            error: error
+                        )
+                    )
+                }
+                
+                do {
+                    let result = try self.resolveResponse(
+                        for: payload,
+                        data: data,
+                        response: response
+                    )
+                    continuation.resume(returning: result!)
+                } catch {
+                    continuation.resume(throwing: error)
+                }
+            }.resume()
+        }
+    }
+
 
     /// Blocking `.send(..)`.
     /// - Warning: This should never be called from the main thread.
+    @available(*, deprecated, message: "Use async send(_:)")
     public func sendSynchronous<T: Request>(_ request: T) throws -> T.Response! {
         let semaphore = DispatchSemaphore(value: 0)
         var result: T.Response?

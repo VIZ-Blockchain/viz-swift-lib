@@ -26,8 +26,7 @@ extension ClientTest {
         ("testBadServerResponse", testBadServerResponse),
         ("testRequest", testRequest),
         ("testRequestWithParams", testRequestWithParams),
-//        ("testRpcError", testRpcError),
-        ("testSeqIdGenerator", testSeqIdGenerator),
+        ("testRpcError", testRpcError),
     ]
 }
 

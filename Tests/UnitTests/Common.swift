@@ -2,7 +2,7 @@ import Foundation
 @testable import VIZ
 import XCTest
 
-extension Data: LosslessStringConvertible {
+extension Data: @retroactive LosslessStringConvertible {
     public init(_ hex: String) {
         self.init(hexEncoded: hex)
     }

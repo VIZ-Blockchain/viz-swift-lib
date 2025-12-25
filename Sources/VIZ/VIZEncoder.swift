@@ -20,11 +20,11 @@ public extension VIZEncodable {
 /// Encodes data into VIZ binary format.
 public class VIZEncoder {
     /// All errors which `VIZEncoder` can throw.
-    public enum Error: Swift.Error {
+    public enum Error: Swift.Error, Sendable {
         /// Thrown if encoder encounters a type that is not conforming to `VIZEncodable`.
-        case typeNotConformingToVIZEncodable(Encodable.Type)
+        case typeNotConformingToVIZEncodable(String)
         /// Thrown if encoder encounters a type that is not confirming to `Encodable`.
-        case typeNotConformingToEncodable(Any.Type)
+        case typeNotConformingToEncodable(String)
     }
 
     /// Data buffer holding the encoded bytes.
@@ -58,7 +58,7 @@ public class VIZEncoder {
         case let v as VIZEncodable:
             try v.binaryEncode(to: self)
         default:
-            throw Error.typeNotConformingToVIZEncodable(type(of: value))
+            throw Error.typeNotConformingToVIZEncodable(String(describing: type(of: value)))
         }
     }
 

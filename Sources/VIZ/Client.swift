@@ -200,7 +200,7 @@ internal protocol IdGenerator {
 }
 
 /// JSON-RPC 2.0 Sequential ID number generator
-internal struct SeqIdGenerator: IdGenerator {
+internal struct SeqIdGenerator: IdGenerator, @unchecked Sendable {
     private var seq: Int = 1
     public init() {}
     public mutating func next() -> Int {

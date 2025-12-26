@@ -236,5 +236,18 @@ class ClientTest: XCTestCase {
         XCTAssertGreaterThanOrEqual(result.customSequence, 37)
         XCTAssertGreaterThanOrEqual(result.customSequenceBlockNum, 65834508)
     }
+    
+    func testGetOpsInBLock() async throws {
+        let req = API.GetOpsInBlock(blockNum: 76088750, onlyVirtual: false)
+        let result = try await client.send(req)
+        XCTAssertEqual(result.count, 4)
+        let award = result.first?.operation as? VIZ.Operation.Award
+        XCTAssertEqual(award?.energy, 5)
+        XCTAssertEqual(award?.initiator, "dice.id")
+        XCTAssertEqual(award?.receiver, "magik")
+        XCTAssertEqual(award?.customSequence, 0)
+        XCTAssertEqual(award?.memo, "🎲")
+        XCTAssertEqual(award?.beneficiaries, [VIZ.Operation.Beneficiary(account: "era-oftech", weight: 1000)])
+    }
 }
 

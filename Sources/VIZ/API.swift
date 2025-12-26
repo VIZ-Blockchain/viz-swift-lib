@@ -192,5 +192,20 @@ public struct API {
             self.customProtocolId = customProtocolId
         }
     }
+    
+    public struct GetOpsInBlock: Request, Encodable {
+        public typealias Response = [OperationObject]
+        public let method = "get_ops_in_block"
+        public var params: RequestParams<AnyEncodable>? {
+            return RequestParams([AnyEncodable(self.blockNum), AnyEncodable(self.onlyVirtual)])
+        }
+        
+        public var blockNum: Int
+        public var onlyVirtual: Bool
+        public init(blockNum: Int, onlyVirtual: Bool) {
+            self.blockNum = blockNum
+            self.onlyVirtual = onlyVirtual
+        }
+    }
 }
 

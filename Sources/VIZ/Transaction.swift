@@ -167,21 +167,18 @@ extension SignedTransaction {
     }
 }
 
-// Workaround for: Swift runtime does not yet support dynamically querying conditional conformance.
-#if !swift(>=4.2)
-    extension Transaction {
-        public func binaryEncode(to encoder: VIZEncoder) throws {
-            try encoder.encode(self.refBlockNum)
-            try encoder.encode(self.refBlockPrefix)
-            try encoder.encode(self.expiration)
-            encoder.appendVarint(UInt64(self.operations.count))
-            for operation in self._operations {
-                try operation.binaryEncode(to: encoder)
-            }
-            encoder.appendVarint(UInt64(self.extensions.count))
-            for ext in self.extensions {
-                ext.binaryEncode(to: encoder)
-            }
+extension Transaction {
+    public func binaryEncode(to encoder: VIZEncoder) throws {
+        try encoder.encode(self.refBlockNum)
+        try encoder.encode(self.refBlockPrefix)
+        try encoder.encode(self.expiration)
+        encoder.appendVarint(UInt64(self.operations.count))
+        for operation in self._operations {
+            try operation.binaryEncode(to: encoder)
+        }
+        encoder.appendVarint(UInt64(self.extensions.count))
+        for ext in self.extensions {
+            ext.binaryEncode(to: encoder)
         }
     }
-#endif
+}

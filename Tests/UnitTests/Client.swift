@@ -1,26 +1,32 @@
 @testable import VIZ
 import XCTest
 
-fileprivate final class TestTask: SessionDataTask {
-    private(set) var resumed = false
-    func resume() {
-        resumed = true
+fileprivate actor TestSession: SessionAdapter {
+    private var nextResponse: (Data?, URLResponse?, Error?)
+    private(set) var lastRequest: URLRequest?
+    
+    init(_ nextResponse: (Data?, URLResponse?, Error?)) {
+        self.nextResponse = nextResponse
+    }
+    
+    func data(for request: URLRequest) async throws -> (Data, URLResponse) {
+        lastRequest = request
+        
+        if let error = nextResponse.2 {
+            throw error
+        }
+        
+        guard
+            let data = nextResponse.0,
+            let response = nextResponse.1
+        else {
+            throw URLError(.badServerResponse)
+        }
+        
+        return (data, response)
     }
 }
 
-fileprivate final class TestSession: SessionAdapter {
-    var nextResponse: (Data?, URLResponse?, Error?) = (nil, nil, nil)
-    private(set) var lastRequest: URLRequest?
-    
-    func dataTask(
-        with request: URLRequest,
-        completionHandler: @escaping (Data?, URLResponse?, Error?) -> Void
-    ) -> SessionDataTask {
-        lastRequest = request
-        completionHandler(nextResponse.0, nextResponse.1, nextResponse.2)
-        return TestTask()
-    }
-}
 
 fileprivate struct TestRequest: Request {
     typealias Response = String
@@ -68,8 +74,7 @@ final class ClientTest: XCTestCase {
     
     
     func testRequest() async throws {
-        let session = TestSession()
-        session.nextResponse = jsonResponse(["id": 42, "result": "foo"])
+        let session = TestSession(jsonResponse(["id": 42, "result": "foo"]))
         
         let client = makeClient(session: session)
         
@@ -79,8 +84,7 @@ final class ClientTest: XCTestCase {
     
     
     func testRequestWithParams() async throws {
-        let session = TestSession()
-        session.nextResponse = jsonResponse(["id": 42, "result": "foo"])
+        let session = TestSession(jsonResponse(["id": 42, "result": "foo"]))
         
         let client = makeClient(session: session)
         
@@ -93,8 +97,7 @@ final class ClientTest: XCTestCase {
     
     
     func testBadServerResponse() async {
-        let session = TestSession()
-        session.nextResponse = errorResponse(code: 503, message: "So sorry")
+        let session = TestSession(errorResponse(code: 503, message: "So sorry"))
         
         let client = makeClient(session: session)
         
@@ -114,8 +117,7 @@ final class ClientTest: XCTestCase {
     
     
     func testBadRpcResponse() async {
-        let session = TestSession()
-        session.nextResponse = jsonResponse(["id": 0, "banana": false])
+        let session = TestSession(jsonResponse(["id": 0, "banana": false]))
         
         let client = makeClient(session: session)
         
@@ -135,8 +137,7 @@ final class ClientTest: XCTestCase {
     
     
     func testRpcError() async throws {
-        let session = TestSession()
-        session.nextResponse = jsonResponse([
+        let response = jsonResponse([
             "id": 42,
             "error": [
                 "code": 123,
@@ -148,6 +149,7 @@ final class ClientTest: XCTestCase {
                 ]
             ]
         ])
+        let session = TestSession(response)
 
         let client = makeClient(session: session)
         

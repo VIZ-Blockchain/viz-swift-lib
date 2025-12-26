@@ -1,25 +1,10 @@
 /// JSON-RPC 2.0 client.
 /// - Author: Johan Nordberg <johan@steemit.com>
+/// - Author: Vladimir Babin <vovababin@gmail.com>
 
 import Foundation
 
 /// JSON-RPC 2.0 request type.
-///
-/// Implementers should provide `Decodable` response types, example:
-///
-///     struct MyResponse: Decodable {
-///         let hello: String
-///         let foo: Int
-///     }
-///     struct MyRequest: VIZ.Request {
-///         typealias Response = MyResponse
-///         let method = "my_method"
-///         let params: RequestParams<String>
-///         init(name: String) {
-///             self.params = RequestParams(["hello": name])
-///         }
-///     }
-///
 public protocol Request {
     /// Response type.
     associatedtype Response: Decodable
@@ -177,24 +162,12 @@ internal struct ResponseErrorPayload<T: Request>: Decodable {
 
 /// URLSession adapter, for testability.
 public protocol SessionAdapter: Sendable {
-    func dataTask(
-        with request: URLRequest,
-        completionHandler: @escaping (Data?, URLResponse?, Error?) -> Void
-    ) -> SessionDataTask
+    func data(for request: URLRequest) async throws -> (Data, URLResponse)
 }
 
+@available(macOS 10.15, iOS 13.0, watchOS 6.0, tvOS 13.0, *)
+extension URLSession: SessionAdapter {}
 
-public protocol SessionDataTask {
-    func resume()
-}
-
-extension URLSessionDataTask: SessionDataTask {}
-extension URLSession: SessionAdapter {
-    public func dataTask(with request: URLRequest, completionHandler: @escaping (Data?, URLResponse?, Error?) -> Void) -> SessionDataTask {
-        let task: URLSessionDataTask = self.dataTask(with: request, completionHandler: completionHandler)
-        return task as SessionDataTask
-    }
-}
 
 /// VIZ-flavoured JSON-RPC 2.0 client.
 public actor Client {
@@ -298,82 +271,39 @@ public actor Client {
         }
         return responsePayload.result
     }
-
-    /// Old way to send a JSON-RPC 2.0 request.
-    /// - Parameter request: The request to be sent.
-    /// - Parameter completionHandler: Callback function, called with either a response or an error.
-    @available(*, deprecated, message: "Use async send(_:)")
-    public func send<T: Request>(_ request: T, completionHandler: @escaping (T.Response?, Swift.Error?) -> Void) -> Void {
-        let payload = RequestPayload(request: request, id: self.generateId())
-        let urlRequest: URLRequest
-        do {
-            urlRequest = try self.urlRequest(for: payload)
-        } catch {
-            return completionHandler(nil, Error.codingError(message: "Unable to encode payload", error: error))
-        }
-        self.session.dataTask(with: urlRequest) { data, response, error in
-            if let error = error {
-                return completionHandler(nil, Error.networkError(message: "Unable to send request", error: error))
-            }
-            let rv: T.Response?
-            do {
-                rv = try self.resolveResponse(for: payload, data: data, response: response)
-            } catch {
-                return completionHandler(nil, error)
-            }
-            completionHandler(rv, nil)
-        }.resume()
-    }
     
     /// Send a JSON-RPC 2.0 request.
     /// - Parameter request: The request to be sent.
-    @available(macOS 10.15, *)
     public func send<T: Request>(_ request: T) async throws -> T.Response {
-        let payload = RequestPayload(request: request, id: self.generateId())
-        let urlRequest = try self.urlRequest(for: payload)
+        let payload = RequestPayload(request: request, id: generateId())
+        let urlRequest = try urlRequest(for: payload)
         
-        return try await withCheckedThrowingContinuation { continuation in
-            self.session.dataTask(with: urlRequest) { data, response, error in
-                if let error {
-                    return continuation.resume(
-                        throwing: Error.networkError(
-                            message: "Unable to send request",
-                            error: error
-                        )
-                    )
-                }
-                
-                do {
-                    let result = try self.resolveResponse(
-                        for: payload,
-                        data: data,
-                        response: response
-                    )
-                    continuation.resume(returning: result!)
-                } catch {
-                    continuation.resume(throwing: error)
-                }
-            }.resume()
+        let data: Data
+        let response: URLResponse
+        
+        do {
+            (data, response) = try await session.data(for: urlRequest)
+        } catch {
+            throw Error.networkError(
+                message: "Unable to send request",
+                error: error
+            )
         }
-    }
-
-
-    /// Blocking `.send(..)`.
-    /// - Warning: This should never be called from the main thread.
-    @available(*, deprecated, message: "Use async send(_:)")
-    public func sendSynchronous<T: Request>(_ request: T) throws -> T.Response! {
-        let semaphore = DispatchSemaphore(value: 0)
-        var result: T.Response?
-        var error: Swift.Error?
-        self.send(request) {
-            result = $0
-            error = $1
-            semaphore.signal()
+        
+        guard let result = try resolveResponse(
+            for: payload,
+            data: data,
+            response: response
+        ) else {
+            throw Error.codingError(
+                message: "Empty result",
+                error: DecodingError.valueNotFound(
+                    T.Response.self,
+                    .init(codingPath: [], debugDescription: "Result is null")
+                )
+            )
         }
-        semaphore.wait()
-        if let error = error {
-            throw error
-        }
+        
         return result
     }
 }
@@ -418,9 +348,7 @@ extension Client {
         let decoder = Foundation.JSONDecoder()
         decoder.dataDecodingStrategy = dataDecoder
         decoder.dateDecodingStrategy = dateDecoder
-        #if !os(Linux)
-            decoder.keyDecodingStrategy = .convertFromSnakeCase
-        #endif
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
         return decoder
     }
 
@@ -429,23 +357,7 @@ extension Client {
         let encoder = Foundation.JSONEncoder()
         encoder.dataEncodingStrategy = dataEncoder
         encoder.dateEncodingStrategy = dateEncoder
-        #if !os(Linux)
-            encoder.keyEncodingStrategy = .convertToSnakeCase
-        #endif
+        encoder.keyEncodingStrategy = .convertToSnakeCase
         return encoder
     }
 }
-
-#if os(Linux)
-    fileprivate let WARNING = print(
-        """
-            WARNING: Swift 4.1 on Linux is missing the snake case decoding JSON strategies.
-                     Some API request may fail until this is fixed or a workaround can be found.
-
-                     More info:
-                     https://bugs.swift.org/browse/SR-7180
-
-        """
-    )
-#endif
-

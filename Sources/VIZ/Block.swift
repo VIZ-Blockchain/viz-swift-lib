@@ -4,7 +4,7 @@
 import Foundation
 
 /// Type representing a VIZ block ID.
-public struct BlockId: Codable, Equatable {
+public struct BlockId: Codable, Equatable, Sendable {
     /// The block hash.
     public var hash: Data
     /// The block number.
@@ -29,7 +29,7 @@ public struct BlockId: Codable, Equatable {
 }
 
 /// Block extensions used for signaling.
-public enum BlockExtension: Equatable {
+public enum BlockExtension: Equatable, Sendable {
     /// Unknown block extension.
     case unknown
     /// Witness version reporting.
@@ -62,7 +62,7 @@ public struct BlockHeader: _BlockHeader {
 }
 
 /// A type representing a signed VIZ block header.
-public struct SignedBlockHeader: _BlockHeader, Equatable {
+public struct SignedBlockHeader: _BlockHeader, Equatable, Sendable {
     public let previous: BlockId
     public let timestamp: Date
     public let witness: String

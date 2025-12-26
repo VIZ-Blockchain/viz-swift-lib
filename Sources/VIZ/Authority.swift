@@ -7,9 +7,9 @@ import Foundation
 ///
 /// Authorities are a collection of accounts and keys that need to sign
 /// a message for it to be considered valid.
-public struct Authority: VIZCodable, Equatable {
+public struct Authority: VIZCodable, Equatable, Sendable {
     /// A type representing a key or account auth and its weight.
-    public struct Auth<T: VIZCodable & Equatable>: Equatable {
+    public struct Auth<T: VIZCodable & Equatable & Sendable>: Equatable, Sendable {
         public let value: T
         public let weight: UInt16
     }

@@ -4,7 +4,7 @@
 import Foundation
 
 /// A VIZ signature.
-public struct Signature: Equatable, LosslessStringConvertible {
+public struct Signature: Equatable, LosslessStringConvertible, Sendable {
     private let signature: Data
     private let recoveryId: UInt8
 

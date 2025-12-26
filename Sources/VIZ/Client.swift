@@ -7,7 +7,7 @@ import Foundation
 /// JSON-RPC 2.0 request type.
 public protocol Request {
     /// Response type.
-    associatedtype Response: Decodable
+    associatedtype Response: Decodable, Sendable
     /// Request parameter type.
     associatedtype Params: Encodable
     var api: String { get }
@@ -135,8 +135,8 @@ extension RequestPayload: Encodable {
 }
 
 /// JSON-RPC 2.0 response error type.
-internal struct ResponseError: Decodable {
-    internal struct ResponseDataError: Decodable {
+internal struct ResponseError: Decodable, Sendable {
+    internal struct ResponseDataError: Decodable, Sendable {
         let code: Int
         let name: String
         let message: String
@@ -148,13 +148,13 @@ internal struct ResponseError: Decodable {
 }
 
 /// JSON-RPC 2.0 response payload wrapper.
-internal struct ResponsePayload<T: Request>: Decodable {
+internal struct ResponsePayload<T: Request>: Decodable, Sendable {
     let id: Int?
     let result: T.Response?
     let error: ResponseError?
 }
 
-internal struct ResponseErrorPayload<T: Request>: Decodable {
+internal struct ResponseErrorPayload<T: Request>: Decodable, Sendable {
     let id: Int?
     let error: ResponseError?
 }
@@ -207,6 +207,7 @@ public actor Client {
     /// Create a new client instance.
     /// - Parameter address: The rpc server to connect to.
     /// - Parameter session: The session to use when sending requests to the server.
+    @available(macOS 10.15, iOS 13.0, watchOS 6.0, tvOS 13.0, *)
     public init(address: URL, session: SessionAdapter = URLSession.shared, fixedId: Int? = nil) {
         self.address = address
         self.session = session as SessionAdapter

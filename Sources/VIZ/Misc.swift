@@ -7,10 +7,10 @@ import Foundation
 public typealias VIZCodable = VIZEncodable & Decodable
 
 /// Placeholder type for future extensions.
-public struct FutureExtensions: VIZCodable, Equatable {}
+public struct FutureExtensions: VIZCodable, Equatable, Sendable {}
 
 /// Type representing an optional JSON string.
-public struct JSONString: Equatable {
+public struct JSONString: Equatable, Sendable {
     /// The JSON string value, an empty string denotes a nil object.
     public var value: String
 

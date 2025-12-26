@@ -5,9 +5,9 @@
 import Foundation
 
 /// The VIZ asset type.
-public struct Asset: Equatable {
+public struct Asset: Equatable, Sendable {
     /// Asset symbol type, containing the symbol name and precision.
-    public enum Symbol: Equatable {
+    public enum Symbol: Equatable, Sendable {
         /// The VIZ token.
         case viz
         /// Vesting shares.

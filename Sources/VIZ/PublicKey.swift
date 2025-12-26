@@ -4,9 +4,9 @@
 import Foundation
 
 /// A VIZ public key.
-public struct PublicKey: Equatable {
+public struct PublicKey: Equatable, Sendable {
     /// Chain address prefix.
-    public enum AddressPrefix: Equatable, Hashable {
+    public enum AddressPrefix: Equatable, Hashable, Sendable {
         case mainNet // VIZ
         case testNet // VIZ
         case custom(String)

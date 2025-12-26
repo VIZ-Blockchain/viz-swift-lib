@@ -7,7 +7,7 @@ import Foundation
 /// VIZ RPC API request- and response-types.
 public struct API {
 
-    public struct DynamicGlobalProperties: Decodable {
+    public struct DynamicGlobalProperties: Decodable, Sendable {
         public let headBlockNumber: UInt32
         public let headBlockId: BlockId
         public let time: Date
@@ -41,7 +41,7 @@ public struct API {
         public init() {}
     }
 
-    public struct TransactionConfirmation: Decodable {
+    public struct TransactionConfirmation: Decodable, Sendable {
         public let id: Data
         public let blockNum: Int32
         public let trxNum: Int32
@@ -66,7 +66,7 @@ public struct API {
         }
     }
 
-    public struct Share: Decodable {
+    public struct Share: Decodable, Sendable {
         public let value: Int64
         public init(from decoder: Decoder) throws {
             let container = try decoder.singleValueContainer()
@@ -79,7 +79,7 @@ public struct API {
     }
 
     /// The "extended" account object returned by get_accounts.
-    public struct ExtendedAccount: Decodable {
+    public struct ExtendedAccount: Decodable, Sendable {
         public let id: Int
         public let name: String
         public let masterAuthority: Authority
@@ -138,7 +138,7 @@ public struct API {
         }
     }
 
-    public struct OperationObject: Decodable {
+    public struct OperationObject: Decodable, Sendable {
         public let trxId: Data
         public let block: UInt32
         public let trxInBlock: UInt32
@@ -151,7 +151,7 @@ public struct API {
         }
     }
 
-    public struct AccountHistoryObject: Decodable {
+    public struct AccountHistoryObject: Decodable, Sendable {
         public let id: UInt32
         public let value: OperationObject
         public init(from decoder: Decoder) throws {

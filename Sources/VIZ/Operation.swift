@@ -4,7 +4,7 @@
 import Foundation
 
 /// A type that represents a operation on the VIZ blockchain.
-public protocol OperationType: VIZCodable {
+public protocol OperationType: VIZCodable, Sendable {
     /// Whether the operation is virtual or not.
     var isVirtual: Bool { get }
 }
@@ -215,7 +215,7 @@ public struct Operation {
     /// Registers or updates witnesses.
     public struct WitnessUpdate: OperationType, Equatable {
         /// Witness chain properties.
-        public struct Properties: VIZCodable, Equatable {
+        public struct Properties: VIZCodable, Equatable, Sendable {
 //            public var accountCreationFee: Asset
 //            public var maximumBlockSize: UInt32
 //            public var sbdInterestRate: UInt16
@@ -339,13 +339,13 @@ public struct Operation {
 
     /// Sets comment options.
     public struct CommentOptions: OperationType, Equatable {
-        public struct BeneficiaryRoute: VIZCodable, Equatable {
+        public struct BeneficiaryRoute: VIZCodable, Equatable, Sendable {
             public var account: String
             public var weight: UInt16
         }
 
         /// Comment option extensions.
-        public enum Extension: VIZCodable, Equatable {
+        public enum Extension: VIZCodable, Equatable, Sendable {
             /// Unknown extension.
             case unknown
             /// Comment payout routing.
@@ -1102,7 +1102,7 @@ fileprivate enum OperationId: UInt8, VIZEncodable, Decodable {
 }
 
 /// A type-erased VIZ operation.
-internal struct AnyOperation: VIZEncodable, Decodable {
+internal struct AnyOperation: VIZEncodable, Decodable, Sendable {
     public let operation: OperationType
 
     /// Create a new operation wrapper.

@@ -177,5 +177,20 @@ public struct API {
             self.limit = limit
         }
     }
+    
+    public struct GetAccount: Request, Encodable {
+        public typealias Response = ExtendedAccount
+        public let method = "get_account"
+        public var params: RequestParams<AnyEncodable>? {
+            return RequestParams([AnyEncodable(self.account), AnyEncodable(self.customProtocolId)])
+        }
+        
+        public var account: String
+        public var customProtocolId: String
+        public init(account: String, customProtocolId: String) {
+            self.account = account
+            self.customProtocolId = customProtocolId
+        }
+    }
 }
 

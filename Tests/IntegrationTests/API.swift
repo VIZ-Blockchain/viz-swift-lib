@@ -182,14 +182,13 @@ class ClientTest: XCTestCase {
     }
 
 
-    func testGetAccount() async throws {
+    func testGetAccounts() async throws {
         let result = try await client.send(
             API.GetAccounts(names: ["kelechek"])
         )
         guard let account = result.first else {
             return XCTFail("No account returned")
         }
-        
         XCTAssertEqual(account.id, 3775)
         XCTAssertEqual(account.name, "kelechek")
         XCTAssertEqual(
@@ -203,18 +202,16 @@ class ClientTest: XCTestCase {
         let req = API.GetAccountHistory(
             account: "babin",
             from: -1,
-            limit: 1
+            limit: 100
         )
         
         let result = try await client.send(req)
-        XCTAssertNotNil(result)
+        XCTAssertEqual(result.count, 101)
     }
 
     
     func testGetCurrentBlock() async throws {
-        let props = try await client.send(
-            API.GetDynamicGlobalProperties()
-        )
+        let props = try await client.send(API.GetDynamicGlobalProperties())
         
         let currentBlock = Int(props.headBlockId.num)
         let block = try await client.send(
@@ -231,6 +228,13 @@ class ClientTest: XCTestCase {
             Date().timeIntervalSince1970,
             accuracy: 5
         )
+    }
+    
+    func testGetAccountCustomProtocol() async throws {
+        let req = API.GetAccount(account: "id", customProtocolId: "V")
+        let result = try await client.send(req)
+        XCTAssertGreaterThanOrEqual(result.customSequence, 37)
+        XCTAssertGreaterThanOrEqual(result.customSequenceBlockNum, 65834508)
     }
 }
 

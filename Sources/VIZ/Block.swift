@@ -72,7 +72,7 @@ public struct SignedBlockHeader: _BlockHeader, Equatable, Sendable {
 }
 
 /// A type representing a VIZ block.
-public struct SignedBlock: _BlockHeader, Equatable {
+public struct SignedBlock: _BlockHeader, Equatable, Sendable {
     /// The transactions included in this block.
     public let transactions: [Transaction]
     /// The block number.

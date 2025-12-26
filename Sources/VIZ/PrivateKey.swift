@@ -4,7 +4,7 @@
 import Foundation
 
 /// A VIZ private key.
-public struct PrivateKey: Equatable {
+public struct PrivateKey: Equatable, Sendable {
     private let secret: Data
 
     /// For testing, wether to use a counter or random value for ndata when signing.

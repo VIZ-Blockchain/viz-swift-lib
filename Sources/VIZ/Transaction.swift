@@ -3,7 +3,7 @@
 
 import Foundation
 
-fileprivate protocol _Transaction: VIZEncodable, Decodable {
+fileprivate protocol _Transaction: VIZEncodable, Decodable, Sendable {
     /// Block number reference.
     var refBlockNum: UInt16 { get }
     /// Block number reference id.
@@ -65,7 +65,7 @@ extension Transaction: Equatable {
 }
 
 /// A signed transaction.
-public struct SignedTransaction: _Transaction, Equatable {
+public struct SignedTransaction: _Transaction, Equatable, Sendable {
     /// Transaction signatures.
     public var signatures: [Signature]
 

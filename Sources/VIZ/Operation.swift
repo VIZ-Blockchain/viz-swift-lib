@@ -851,6 +851,15 @@ public struct Operation {
     }
 
     // Virtual operations.
+    
+    public struct ReceiveAward: OperationType, Equatable {
+        public var isVirtual: Bool { return true }
+        public let initiator: String
+        public let receiver: String
+        public let customSequence: UInt64
+        public let memo: String
+        public let shares: Asset
+    }
 
     public struct AuthorReward: OperationType, Equatable {
         public var isVirtual: Bool { return true }
@@ -945,12 +954,14 @@ public struct Operation {
         public let vestingShares: Asset
     }
 
-    public struct CommentBenefactorReward: OperationType, Equatable {
+    public struct BenefactorAward: OperationType, Equatable {
         public var isVirtual: Bool { return true }
+        public let initiator: String
         public let benefactor: String
-        public let author: String
-        public let permlink: String
-        public let reward: Asset
+        public let receiver: String
+        public let customSequence: UInt64
+        public let memo: String
+        public let shares: Asset
     }
 
     public struct WitnessReward: OperationType, Equatable {
@@ -1139,8 +1150,8 @@ internal struct AnyOperation: VIZEncodable, Decodable {
         case .invite_registration: op = try container.decode(Operation.InviteRegistration.self)
         case .versioned_chain_properties_update: op = Operation.Unknown()
         case .award: op = try container.decode(Operation.Award.self)
-        case .receive_award: op = Operation.Unknown()
-        case .benefactor_award: op = try container.decode(Operation.CommentBenefactorReward.self)
+        case .receive_award: op = try container.decode(Operation.ReceiveAward.self)
+        case .benefactor_award: op = try container.decode(Operation.BenefactorAward.self)
         case .set_paid_subscription: op = Operation.Unknown()
         case .paid_subscribe: op = Operation.Unknown()
         case .paid_subscription_action: op = Operation.Unknown()
@@ -1241,6 +1252,12 @@ internal struct AnyOperation: VIZEncodable, Decodable {
             try container.encode(op)
         case let op as Operation.Award:
             try container.encode(OperationId.award)
+            try container.encode(op)
+        case let op as Operation.ReceiveAward:
+            try container.encode(OperationId.receive_award)
+            try container.encode(op)
+        case let op as Operation.BenefactorAward:
+            try container.encode(OperationId.benefactor_award)
             try container.encode(op)
         case let op as Operation.InviteRegistration:
             try container.encode(OperationId.invite_registration)

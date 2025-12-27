@@ -6,6 +6,9 @@ import Foundation
 
 /// VIZ RPC API request- and response-types.
 public struct API {
+    
+    // https://github.com/VIZ-Blockchain/viz-cpp-node/blob/786afa351fb24bfa7353578bdf6a88e5687ee8ca/libraries/protocol/include/graphene/protocol/config.hpp#L49
+    public static let CHAIN_ENERGY_REGENERATION_SECONDS: Double = 5*60*60*24 // 5 days
 
     public struct DynamicGlobalProperties: Decodable, Sendable {
         public let headBlockNumber: UInt32
@@ -68,6 +71,11 @@ public struct API {
 
     public struct Share: Decodable, Sendable {
         public let value: Int64
+        
+        public init(_ value: Int64) {
+            self.value = value
+        }
+        
         public init(from decoder: Decoder) throws {
             let container = try decoder.singleValueContainer()
             if let intValue = try? container.decode(Int64.self) {
@@ -126,6 +134,23 @@ public struct API {
         public let subaccountSeller: String
         public let subaccountOfferPrice: Asset
         public let subaccountOnSale: Bool
+        
+        public var effectiveVestingShares: Double {
+            vestingShares.resolvedAmount
+            + receivedVestingShares.resolvedAmount
+            - delegatedVestingShares.resolvedAmount
+        }
+        
+        public var currentEnergy: Int {
+            let deltaTime = Date().timeIntervalSince(lastVoteTime)
+            var e = Float64(energy) + (deltaTime * 10000 / CHAIN_ENERGY_REGENERATION_SECONDS)
+            if e > 10000 {
+                e = 10000
+            } else if e < 0 {
+                e = 0
+            }
+            return Int(e)
+        }
     }
 
     /// Fetch accounts.

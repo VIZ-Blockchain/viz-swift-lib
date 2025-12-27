@@ -233,8 +233,14 @@ class ClientTest: XCTestCase {
     func testGetAccountCustomProtocol() async throws {
         let req = API.GetAccount(account: "id", customProtocolId: "V")
         let result = try await client.send(req)
+        
         XCTAssertGreaterThanOrEqual(result.customSequence, 37)
-        XCTAssertGreaterThanOrEqual(result.customSequenceBlockNum, 65834508)
+        XCTAssertGreaterThanOrEqual(result.customSequenceBlockNum, 65_834_508)
+        
+        XCTAssertGreaterThanOrEqual(result.currentEnergy, 0)
+        XCTAssertLessThanOrEqual(result.currentEnergy, 10_000)
+        
+        XCTAssertGreaterThan(result.effectiveVestingShares, 5_000_000)
     }
     
     func testGetOpsInBLock() async throws {

@@ -331,8 +331,8 @@ do {
 
 ## Dependencies
 
-- [secp256k1](https://github.com/bitcoin-core/secp256k1) - Cryptographic operations
-- [OrderedDictionary](https://github.com/lukaskubanek/OrderedDictionary-Swift) - Ordered collections
+- [secp256k1](https://github.com/greymass/secp256k1) - ECDSA signatures and secret/public key operations on curve secp256k1
+- [OrderedDictionary](https://github.com/lukaskubanek/OrderedDictionary) - Ordered dictionary data structure lightweight implementation
 
 ## Contributing
 

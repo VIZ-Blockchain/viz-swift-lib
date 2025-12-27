@@ -14,9 +14,9 @@ class PerformanceTest: XCTestCase {
     }
 
     func testEncode() {
-        let vote = Operation.Vote(voter: "foo", author: "bar", permlink: "baz")
-        let comment = Operation.Content(title: "foo", body: "bar", author: "baz", permlink: "qux")
-        let txn = Transaction(refBlockNum: 0, refBlockPrefix: 0, expiration: Date(), operations: [vote, comment])
+        let award = Operation.Award(initiator: "foo", receiver: "bar", energy: 10000, customSequence: 0, memo: "baz", beneficiaries: [Operation.Beneficiary(account: "qux", weight: 1000)])
+        let transfer = Operation.Transfer(from: "foo", to: "bar", amount: Asset(100.500, Asset.Symbol.viz), memo: "baz")
+        let txn = Transaction(refBlockNum: 0, refBlockPrefix: 0, expiration: Date(), operations: [award, transfer])
         self.measure {
             for _ in 0 ... 1000 {
                 _ = try! VIZEncoder.encode(txn)

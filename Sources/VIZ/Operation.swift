@@ -266,9 +266,6 @@ public struct Operation {
         }
     }
 
-    /// Submits a proof of work, legacy.
-    public struct Pow: OperationType, Equatable {}
-
     /// Custom operation.
     public struct Custom: OperationType, Equatable {
         public var requiredRegularAuths: [String]
@@ -577,9 +574,6 @@ public struct Operation {
             self.steemAmount = steemAmount
         }
     }
-
-    /// Submits equihash proof of work, legacy.
-    public struct Pow2: OperationType, Equatable {}
 
     public struct EscrowApprove: OperationType, Equatable {
         public var from: String

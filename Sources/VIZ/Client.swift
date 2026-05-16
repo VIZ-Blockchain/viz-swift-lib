@@ -230,7 +230,6 @@ public actor Client {
         urlRequest.setValue("swift-viz/1.0", forHTTPHeaderField: "User-Agent")
         urlRequest.httpMethod = "POST"
         urlRequest.httpBody = try encoder.encode(payload)
-//        print(String(data:urlRequest.httpBody!, encoding: .utf8))
         return urlRequest
     }
 

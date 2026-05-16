@@ -81,6 +81,7 @@ public struct API {
             if let intValue = try? container.decode(Int64.self) {
                 self.value = intValue
             } else {
+                // TODO: should throw DecodingError on parse failure instead of returning 0
                 self.value = Int64(try container.decode(String.self)) ?? 0
             }
         }
@@ -141,6 +142,7 @@ public struct API {
             - delegatedVestingShares.resolvedAmount
         }
         
+        // TODO: take a Date parameter for testability instead of reading Date() implicitly
         public var currentEnergy: Int {
             let deltaTime = Date().timeIntervalSince(lastVoteTime)
             var e = Float64(energy) + (deltaTime * 10000 / CHAIN_ENERGY_REGENERATION_SECONDS)

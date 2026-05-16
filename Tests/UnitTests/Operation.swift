@@ -603,4 +603,80 @@ class OperationTest: XCTestCase {
             }
         }
     }
+
+    func testEncodeAsymmetry_definedButNotEncodable() {
+        // These operation types are defined in Operation.swift but AnyOperation.encode does not dispatch
+        // on them (or dispatches incorrectly). Each wrap-and-encode attempt is expected to throw today.
+        // When any of these is fixed (added to the encode switch or paired correctly with an OperationId),
+        // the corresponding XCTAssertThrowsError line will fail and force this test to be updated.
+
+        // 1. Operation.CustomJson — decode side produces it for the `custom` op id, but encode dispatches
+        //    on Operation.Custom. So wrapping a CustomJson and encoding throws.
+        XCTAssertThrowsError(try VIZEncoder.encode(AnyOperation(Operation.CustomJson(
+            requiredAuths: [], requiredPostingAuths: ["alice"], id: "test", json: "{}"
+        ))), "CustomJson")
+
+        // 2. Operation.Convert — no OperationId.convert case exists.
+        XCTAssertThrowsError(try VIZEncoder.encode(AnyOperation(Operation.Convert(
+            owner: "alice", requestid: 1, amount: Asset(1, .viz)
+        ))), "Convert")
+
+        // 3. Operations defined as types but missing from the encode dispatch switch.
+        let pubKey = PublicKey("VIZ8LMF1uA5GAPfsAe1dieBRATQfhgi1ZqXYRFkaj1WaaWx9vVjau")!
+        let auth = Authority(weightThreshold: 1, accountAuths: [], keyAuths: [[pubKey: 1]])
+
+        XCTAssertThrowsError(try VIZEncoder.encode(AnyOperation(Operation.CommentOptions(
+            author: "alice", permlink: "post", maxAcceptedPayout: Asset(100, .viz),
+            percentSteemDollars: 10000, allowVotes: true, allowCurationRewards: true, extensions: []
+        ))), "CommentOptions")
+
+        XCTAssertThrowsError(try VIZEncoder.encode(AnyOperation(Operation.ChallengeAuthority(
+            challenger: "alice", challenged: "bob", requireOwner: false
+        ))), "ChallengeAuthority")
+
+        XCTAssertThrowsError(try VIZEncoder.encode(AnyOperation(Operation.ProveAuthority(
+            challenged: "alice", requireOwner: false
+        ))), "ProveAuthority")
+
+        XCTAssertThrowsError(try VIZEncoder.encode(AnyOperation(Operation.TransferToSavings(
+            from: "alice", to: "bob", amount: Asset(1, .viz), memo: ""
+        ))), "TransferToSavings")
+
+        XCTAssertThrowsError(try VIZEncoder.encode(AnyOperation(Operation.TransferFromSavings(
+            from: "alice", requestId: 1, to: "bob", amount: Asset(1, .viz), memo: ""
+        ))), "TransferFromSavings")
+
+        XCTAssertThrowsError(try VIZEncoder.encode(AnyOperation(Operation.CancelTransferFromSavings(
+            from: "alice", requestId: 1
+        ))), "CancelTransferFromSavings")
+
+        XCTAssertThrowsError(try VIZEncoder.encode(AnyOperation(Operation.CustomBinary(
+            requiredOwnerAuths: [], requiredActiveAuths: [], requiredPostingAuths: [],
+            requiredAuths: [], id: "test", data: Data()
+        ))), "CustomBinary")
+
+        XCTAssertThrowsError(try VIZEncoder.encode(AnyOperation(Operation.DeclineVotingRights(
+            account: "alice", decline: true
+        ))), "DeclineVotingRights")
+
+        XCTAssertThrowsError(try VIZEncoder.encode(AnyOperation(Operation.ResetAccount(
+            resetAccount: "alice", accountToReset: "bob", newOwnerAuthority: auth
+        ))), "ResetAccount")
+
+        XCTAssertThrowsError(try VIZEncoder.encode(AnyOperation(Operation.SetResetAccount(
+            account: "alice", currentResetAccount: "bob", resetAccount: "carol"
+        ))), "SetResetAccount")
+
+        XCTAssertThrowsError(try VIZEncoder.encode(AnyOperation(Operation.ClaimRewardBalance(
+            account: "alice", rewardSteem: Asset(1, .viz), rewardSbd: Asset(0, .viz), rewardVests: Asset(0.5, .vests)
+        ))), "ClaimRewardBalance")
+
+        XCTAssertThrowsError(try VIZEncoder.encode(AnyOperation(Operation.AccountCreateWithDelegation(
+            fee: Asset(1, .viz), delegation: Asset(0, .vests),
+            creator: "alice", newAccountName: "bob",
+            master: auth, active: auth, regular: auth, memoKey: pubKey
+        ))), "AccountCreateWithDelegation")
+
+        // ReportOverProduction: skipped — BlockId has no public initializer; covered by encode-dispatch switch's lack of a case.
+    }
 }

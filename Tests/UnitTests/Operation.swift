@@ -8,6 +8,27 @@ fileprivate struct OperationFixture<Op: OperationType & Equatable & Decodable> {
     let opIdName: String    // string form of the op id, e.g. "vote", used for AnyOperation wrapping
 }
 
+fileprivate func assertVirtualDecodes<Op: OperationType & Equatable>(
+    opIdName: String,
+    json body: String,
+    _ expected: Op,
+    file: StaticString = #file,
+    line: UInt = #line
+) {
+    let wrappedJSON = "[\"\(opIdName)\",\(body)]"
+    do {
+        let any = try TestDecode(AnyOperation.self, json: wrappedJSON)
+        guard let decoded = any.operation as? Op else {
+            XCTFail("Decoded to \(type(of: any.operation)), expected \(Op.self)", file: file, line: line)
+            return
+        }
+        XCTAssertEqual(decoded, expected, file: file, line: line)
+        XCTAssertTrue(decoded.isVirtual, "Expected isVirtual == true", file: file, line: line)
+    } catch {
+        XCTFail("Decode failed: \(error)", file: file, line: line)
+    }
+}
+
 fileprivate func roundTrip<Op>(_ fixture: OperationFixture<Op>, file: StaticString = #file, line: UInt = #line) {
     // 1. Binary encode
     AssertEncodes(fixture.value, fixture.binary, file: file, line: line)
@@ -415,5 +436,121 @@ class OperationTest: XCTestCase {
             opIdName: "invite_registration"
         )
         roundTrip(fx)
+    }
+
+    func testVirtualDecode_authorReward() {
+        assertVirtualDecodes(
+            opIdName: "author_reward",
+            json: "{\"author\":\"alice\",\"permlink\":\"post\",\"sbd_payout\":\"0.000 VIZ\",\"steem_payout\":\"1.000 VIZ\",\"vesting_payout\":\"0.500000 VESTS\"}",
+            Operation.AuthorReward(
+                author: "alice",
+                permlink: "post",
+                sbdPayout: Asset(0, .viz),
+                steemPayout: Asset(1, .viz),
+                vestingPayout: Asset(0.5, .vests)
+            )
+        )
+    }
+
+    func testVirtualDecode_curationReward() {
+        assertVirtualDecodes(
+            opIdName: "curation_reward",
+            json: "{\"curator\":\"alice\",\"reward\":\"0.500000 VESTS\",\"comment_author\":\"bob\",\"comment_permlink\":\"post\"}",
+            Operation.CurationReward(curator: "alice", reward: Asset(0.5, .vests), commentAuthor: "bob", commentPermlink: "post")
+        )
+    }
+
+    func testVirtualDecode_commentReward() {
+        // "content_reward" is not in OperationId.init(from:)'s string-switch — AnyOperation decodes
+        // it as Operation.Unknown. Verify the struct decodes from a bare body JSON instead.
+        AssertDecodes(
+            json: "{\"author\":\"alice\",\"permlink\":\"post\",\"payout\":\"1.000 VIZ\"}",
+            Operation.CommentReward(author: "alice", permlink: "post", payout: Asset(1, .viz))
+        )
+    }
+
+    func testVirtualDecode_liquidityReward() {
+        // No matching OperationId enum case — AnyOperation cannot decode this on its own.
+        // Verify the struct decodes from a bare body JSON instead.
+        AssertDecodes(
+            json: "{\"owner\":\"alice\",\"payout\":\"1.000 VIZ\"}",
+            Operation.LiquidityReward(owner: "alice", payout: Asset(1, .viz))
+        )
+    }
+
+    func testVirtualDecode_interest() {
+        // Same caveat as LiquidityReward: not reachable through AnyOperation today.
+        AssertDecodes(
+            json: "{\"owner\":\"alice\",\"interest\":\"1.000 VIZ\"}",
+            Operation.Interest(owner: "alice", interest: Asset(1, .viz))
+        )
+    }
+
+    func testVirtualDecode_fillConvertRequest() {
+        AssertDecodes(
+            json: "{\"owner\":\"alice\",\"requestid\":1,\"amount_in\":\"1.000 VIZ\",\"amount_out\":\"1.000 VIZ\"}",
+            Operation.FillConvertRequest(owner: "alice", requestid: 1, amountIn: Asset(1, .viz), amountOut: Asset(1, .viz))
+        )
+    }
+
+    func testVirtualDecode_fillVestingWithdraw() {
+        assertVirtualDecodes(
+            opIdName: "fill_vesting_withdraw",
+            json: "{\"from_account\":\"alice\",\"to_account\":\"alice\",\"withdrawn\":\"1.000000 VESTS\",\"deposited\":\"1.000 VIZ\"}",
+            Operation.FillVestingWithdraw(fromAccount: "alice", toAccount: "alice", withdrawn: Asset(1, .vests), deposited: Asset(1, .viz))
+        )
+    }
+
+    func testVirtualDecode_shutdownWitness() {
+        assertVirtualDecodes(
+            opIdName: "shutdown_witness",
+            json: "{\"owner\":\"alice\"}",
+            Operation.ShutdownWitness(owner: "alice")
+        )
+    }
+
+    func testVirtualDecode_fillOrder() {
+        AssertDecodes(
+            json: "{\"current_owner\":\"alice\",\"current_orderid\":1,\"current_pays\":\"1.000 VIZ\",\"open_owner\":\"bob\",\"open_orderid\":2,\"open_pays\":\"1.000 VIZ\"}",
+            Operation.FillOrder(currentOwner: "alice", currentOrderid: 1, currentPays: Asset(1, .viz), openOwner: "bob", openOrderid: 2, openPays: Asset(1, .viz))
+        )
+    }
+
+    func testVirtualDecode_fillTransferFromSavings() {
+        AssertDecodes(
+            json: "{\"from\":\"alice\",\"to\":\"bob\",\"amount\":\"1.000 VIZ\",\"request_id\":1,\"memo\":\"\"}",
+            Operation.FillTransferFromSavings(from: "alice", to: "bob", amount: Asset(1, .viz), requestId: 1, memo: "")
+        )
+    }
+
+    func testVirtualDecode_hardfork() {
+        assertVirtualDecodes(
+            opIdName: "hardfork",
+            json: "{\"hardfork_id\":4}",
+            Operation.Hardfork(hardforkId: 4)
+        )
+    }
+
+    func testVirtualDecode_commentPayoutUpdate() {
+        AssertDecodes(
+            json: "{\"author\":\"alice\",\"permlink\":\"post\"}",
+            Operation.CommentPayoutUpdate(author: "alice", permlink: "post")
+        )
+    }
+
+    func testVirtualDecode_returnVestingDelegation() {
+        assertVirtualDecodes(
+            opIdName: "return_vesting_delegation",
+            json: "{\"account\":\"alice\",\"vesting_shares\":\"1.000000 VESTS\"}",
+            Operation.ReturnVestingDelegation(account: "alice", vestingShares: Asset(1, .vests))
+        )
+    }
+
+    func testVirtualDecode_witnessReward() {
+        assertVirtualDecodes(
+            opIdName: "witness_reward",
+            json: "{\"witness\":\"alice\",\"shares\":\"0.500000 VESTS\"}",
+            Operation.WitnessReward(witness: "alice", shares: Asset(0.5, .vests))
+        )
     }
 }

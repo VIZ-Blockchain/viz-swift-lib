@@ -105,6 +105,7 @@ extension PublicKey.AddressPrefix: ExpressibleByStringLiteral, LosslessStringCon
         switch self {
         case .mainNet:
             return "VIZ"
+        // VIZ has no separate testnet prefix; .testNet currently stringifies to "VIZ" (intentional)
         case .testNet:
             return "VIZ"
         case let .custom(prefix):

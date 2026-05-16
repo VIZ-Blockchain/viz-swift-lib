@@ -129,6 +129,7 @@ public struct Operation {
         }
     }
 
+    // TODO: no matching OperationId case — encoding falls through to default and throws
     /// Convert operation.
     public struct Convert: OperationType, Equatable {
         public var owner: String
@@ -1123,6 +1124,7 @@ internal struct AnyOperation: VIZEncodable, Decodable, Sendable {
         case .witness_update: op = try container.decode(Operation.WitnessUpdate.self)
         case .account_witness_vote: op = try container.decode(Operation.AccountWitnessVote.self)
         case .account_witness_proxy: op = try container.decode(Operation.AccountWitnessProxy.self)
+        // TODO: encode dispatches on Operation.Custom, decode produces Operation.CustomJson — reconcile
         case .custom: op = try container.decode(Operation.CustomJson.self)
         case .request_account_recovery: op = try container.decode(Operation.RequestAccountRecovery.self)
         case .recover_account: op = try container.decode(Operation.RecoverAccount.self)
@@ -1211,6 +1213,7 @@ internal struct AnyOperation: VIZEncodable, Decodable, Sendable {
         case let op as Operation.AccountWitnessProxy:
             try container.encode(OperationId.account_witness_proxy)
             try container.encode(op)
+        // TODO: paired with the decode-side TODO above — pick one canonical type for the `custom` op id
         case let op as Operation.Custom:
             try container.encode(OperationId.custom)
             try container.encode(op)

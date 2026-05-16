@@ -5,6 +5,7 @@
 xcuserdata/
 Package.resolved
 /build
-/docs
+/docs/*
+!/docs/superpowers/
 /.gh-pages
 .swiftpm

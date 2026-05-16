@@ -36,4 +36,45 @@ class VIZEncoderTest: XCTestCase {
         let map2: OrderedDictionary = [("2k", Date(timeIntervalSince1970: 946_684_800))]
         AssertEncodes(map2, Data("0102326b80436d38"))
     }
+
+    func testBool() {
+        AssertEncodes(true, Data("01"))
+        AssertEncodes(false, Data("00"))
+    }
+
+    func testDate() {
+        // UInt32 little-endian seconds since 1970
+        AssertEncodes(Date(timeIntervalSince1970: 0), Data("00000000"))
+        // 1700000000 = 0x6553f100 → little-endian: 00 f1 53 65
+        AssertEncodes(Date(timeIntervalSince1970: 1_700_000_000), Data("00f15365"))
+    }
+
+    func testOptional() {
+        AssertEncodes(Optional<UInt16>.some(0xbeef), Data("01efbe"))
+        AssertEncodes(Optional<UInt16>.none, Data("00"))
+    }
+
+    func testRawData() {
+        // Data appends raw bytes with NO length prefix (pinned behavior).
+        AssertEncodes(Data([0x01, 0x02, 0x03]), Data("010203"))
+    }
+
+    func testVarintBoundaries() {
+        // appendVarint is internal — use a String which calls it for its length prefix.
+        // 0-byte string → length varint of 0 → 0x00
+        AssertEncodes("", Data("00"))
+        // 127-byte string → length varint of 127 → 0x7f
+        let s127 = String(repeating: "a", count: 127)
+        AssertEncodes(s127, Data("7f" + String(repeating: "61", count: 127)))
+        // 128-byte string → length varint of 128 → 0x80 0x01
+        let s128 = String(repeating: "a", count: 128)
+        AssertEncodes(s128, Data("8001" + String(repeating: "61", count: 128)))
+    }
+
+    func testLargeArrayVarintLength() {
+        // 200 UInt16 elements → length prefix is c8 01 (200), followed by 400 bytes of element data.
+        let arr = Array(repeating: UInt16(0), count: 200)
+        let expectedHex = "c801" + String(repeating: "0000", count: 200)
+        AssertEncodes(arr, Data(expectedHex))
+    }
 }

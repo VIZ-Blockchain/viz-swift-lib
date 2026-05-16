@@ -1,6 +1,32 @@
 @testable import VIZ
 import XCTest
 
+fileprivate struct OperationFixture<Op: OperationType & Equatable & Decodable> {
+    let value: Op
+    let json: String        // canonical snake_case JSON of the operation body
+    let binary: Data        // canonical binary hex of the operation body (no OperationId prefix)
+    let opIdName: String    // string form of the op id, e.g. "vote", used for AnyOperation wrapping
+}
+
+fileprivate func roundTrip<Op>(_ fixture: OperationFixture<Op>, file: StaticString = #file, line: UInt = #line) {
+    // 1. Binary encode
+    AssertEncodes(fixture.value, fixture.binary, file: file, line: line)
+    // 2. JSON decode
+    AssertDecodes(json: fixture.json, fixture.value, file: file, line: line)
+    // 3. AnyOperation round-trip: wrap [op_id, body] JSON, decode, expect matching op
+    let wrappedJSON = "[\"\(fixture.opIdName)\",\(fixture.json)]"
+    do {
+        let any = try TestDecode(AnyOperation.self, json: wrappedJSON)
+        guard let decoded = any.operation as? Op else {
+            XCTFail("AnyOperation decoded to \(type(of: any.operation)), expected \(Op.self)", file: file, line: line)
+            return
+        }
+        XCTAssertEqual(decoded, fixture.value, file: file, line: line)
+    } catch {
+        XCTFail("AnyOperation decode failed: \(error)", file: file, line: line)
+    }
+}
+
 fileprivate let vote = (
     Operation.Vote(voter: "foo", author: "bar", permlink: "baz", weight: 1000),
     "{\"voter\":\"foo\",\"author\":\"bar\",\"permlink\":\"baz\",\"weight\":1000}"

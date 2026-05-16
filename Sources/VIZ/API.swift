@@ -1,13 +1,13 @@
 /// VIZ RPC requests and responses.
 /// - Author: Johan Nordberg <johan@steemit.com>
 /// - Author: Iain Maitland <imaitland@steemit.com>
+/// - Author: Vladimir Babin <vovababin@gmail.com>
 
 import Foundation
 
 /// VIZ RPC API request- and response-types.
 public struct API {
     
-    // https://github.com/VIZ-Blockchain/viz-cpp-node/blob/786afa351fb24bfa7353578bdf6a88e5687ee8ca/libraries/protocol/include/graphene/protocol/config.hpp#L49
     public static let CHAIN_ENERGY_REGENERATION_SECONDS: Double = 5*60*60*24 // 5 days
 
     public struct DynamicGlobalProperties: Decodable, Sendable {

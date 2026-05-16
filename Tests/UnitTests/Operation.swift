@@ -553,4 +553,54 @@ class OperationTest: XCTestCase {
             Operation.WitnessReward(witness: "alice", shares: Asset(0.5, .vests))
         )
     }
+
+    func testUnknownMappedOps_decodeAsUnknown() {
+        // These op ids exist in OperationId but AnyOperation.init(from:) maps them to Operation.Unknown.
+        // This test pins that current behavior — when any of these is later modeled, the corresponding
+        // line will fail and force a deliberate, test-driven update.
+        let opIds: [String] = [
+            "account_metadata",
+            "proposal_create",
+            "proposal_update",
+            "proposal_delete",
+            "chain_properties_update",
+            "content_payout_update",
+            "content_benefactor_reward",
+            "committee_worker_create_request",
+            "committee_worker_cancel_request",
+            "committee_vote_request",
+            "committee_cancel_request",
+            "committee_approve_request",
+            "committee_payout_request",
+            "committee_pay_request",
+            "use_invite_balance",
+            "expire_escrow_ratification",
+            "set_paid_subscription",
+            "paid_subscribe",
+            "paid_subscription_action",
+            "cancel_paid_subscription",
+            "set_account_price",
+            "set_subaccount_price",
+            "buy_account",
+            "account_sale",
+            "create_invite",
+            "claim_invite_balance",
+            "versioned_chain_properties_update",
+        ]
+
+        for opIdName in opIds {
+            // Body is an empty object; any non-Unknown decode would have to read fields and fail.
+            // Unknown is an empty struct so an empty body decodes cleanly.
+            let json = "[\"\(opIdName)\",{}]"
+            do {
+                let any = try TestDecode(AnyOperation.self, json: json)
+                guard any.operation as? VIZ.Operation.Unknown != nil else {
+                    XCTFail("Expected \(opIdName) to decode as Operation.Unknown, got \(type(of: any.operation))")
+                    continue
+                }
+            } catch {
+                XCTFail("Decode of \(opIdName) failed: \(error)")
+            }
+        }
+    }
 }

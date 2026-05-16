@@ -1,37 +1,43 @@
 # viz-swift-lib
 
-![Tests badge](https://github.com/VIZ-Blockchain/viz-swift-lib/actions/workflows/tests.yml/badge.svg?branch=master)
+![Tests](https://github.com/VIZ-Blockchain/viz-swift-lib/actions/workflows/tests.yml/badge.svg?branch=master)
 [![Swift](https://img.shields.io/badge/Swift-5.5%2B-orange.svg)](https://swift.org)
 ![Platforms](https://img.shields.io/badge/platforms-iOS%20|%20macOS%20|%20tvOS%20|%20watchOS%20|%20Linux-blue.svg)
 [![License](https://img.shields.io/badge/License-MIT-lightgrey.svg)](#license)
 
-**viz-swift-lib** is a low-level, highly flexible Swift library for interacting with the **VIZ blockchain**.
+A low-level, unopinionated Swift library for the **VIZ blockchain**.
 
-It provides building blocks for:
-- creating operations
-- composing transactions
-- computing transaction digests
-- signing transactions with `secp256k1`
-- broadcasting transactions to the network
-
-The library does **not impose any architecture** and does not hide protocol details, making it suitable for:
-- mobile wallets
-- backend services
-- bots
-- experimental and research projects
+`viz-swift-lib` gives you the primitives — operations, transactions, signing, JSON-RPC — and stays out of your way. Good for mobile wallets, backend services, bots, and research projects where you want full control over how the chain is used.
 
 ---
 
-## Design philosophy
+## Contents
 
-Unlike high-level SDKs, `viz-swift-lib` focuses on:
+- [Features](#features)
+- [Installation](#installation)
+- [Quick start](#quick-start)
+- [Keys](#keys)
+- [Assets](#assets)
+- [Common operations](#common-operations)
+- [Signing URLs](#signing-urls)
+- [Authority management](#authority-management)
+- [Error handling](#error-handling)
+- [Requirements](#requirements)
+- [Contributing](#contributing)
+- [License](#license)
 
-- **Full control** — you explicitly create operations, transactions, and signatures
-- **Composability** — multiple operations can be combined in a single transaction
-- **Security** — private keys and signing always remain under your control
-- **Cross-platform** — works on Apple platforms and Linux
+---
 
-If you understand how the VIZ blockchain works, this library does not abstract or restrict anything.
+## Features
+
+- **Full operation coverage** — transfers, awards, account create/update, witness votes, vesting, escrow, recovery, and more
+- **Composable transactions** — combine any number of operations in one signed transaction
+- **Pure-Swift signing** — `secp256k1` ECDSA, key derivation from seed, WIF import/export
+- **Async/await JSON-RPC client** — `actor`-based, `Sendable` types throughout
+- **No hidden state** — you decide how to manage keys, sessions, retries, and broadcasting
+- **Cross-platform** — Apple platforms and Linux
+
+This is **not** a wallet or a high-level SDK: there is no auto-key-management, no UI, no transaction queue. If you need those, build them on top.
 
 ---
 
@@ -39,7 +45,7 @@ If you understand how the VIZ blockchain works, this library does not abstract o
 
 ### Swift Package Manager
 
-Add the following to your `Package.swift`:
+In `Package.swift`:
 
 ```swift
 dependencies: [
@@ -50,43 +56,28 @@ dependencies: [
 ]
 ```
 
-Or in Xcode: File → Add Packages → Enter the repository URL.
+Or in Xcode: **File → Add Packages…** and enter the repository URL.
 
-## Quick Start
+---
 
-### 1. Initialize the Client
+## Quick start
+
+A complete signed transfer from one account to another:
 
 ```swift
 import VIZ
 
 let client = VIZ.Client(address: URL(string: "https://node.viz.cx")!)
-```
 
-### 2. Fetch Account Information
-
-```swift
-let request = VIZ.API.GetAccounts(names: ["alice"])
-let accounts = try await client.send(request)
-
-if let account = accounts.first {
-    print("Balance: \(account.balance)")
-    print("Energy: \(account.energy)")
-    print("Vesting Shares: \(account.vestingShares)")
-}
-```
-
-### 3. Create and Sign a Transaction
-
-```swift
-// Get dynamic global properties for transaction reference
+// 1. Fetch chain head for the transaction reference block.
 let props = try await client.send(VIZ.API.GetDynamicGlobalProperties())
 
-// Create a private key from seed
-guard let privateKey = VIZ.PrivateKey(seed: "alice" + "active" + "password") else {
-    throw Error.invalidKey
+// 2. Derive the signing key (here: from username + role + password).
+guard let key = VIZ.PrivateKey(seed: "alice" + "active" + "password") else {
+    fatalError("invalid seed")
 }
 
-// Create a transfer operation
+// 3. Build the operation.
 let transfer = VIZ.Operation.Transfer(
     from: "alice",
     to: "bob",
@@ -94,70 +85,120 @@ let transfer = VIZ.Operation.Transfer(
     memo: "Thanks for everything!"
 )
 
-// Build the transaction
-let transaction = VIZ.Transaction(
+// 4. Wrap it in a transaction and sign.
+let tx = VIZ.Transaction(
     refBlockNum: UInt16(props.headBlockNumber & 0xFFFF),
     refBlockPrefix: props.headBlockId.prefix,
     expiration: props.time.addingTimeInterval(60),
     operations: [transfer]
 )
+let signed = try tx.sign(usingKey: key)
 
-// Sign and broadcast
-let signedTx = try transaction.sign(usingKey: privateKey)
-let broadcast = VIZ.API.BroadcastTransaction(transaction: signedTx)
-let confirmation = try await client.send(broadcast)
-
+// 5. Broadcast.
+let confirmation = try await client.send(
+    VIZ.API.BroadcastTransaction(transaction: signed)
+)
 print("Transaction ID: \(confirmation.id.base58EncodedString() ?? "")")
 ```
 
-## Common Use Cases
+---
 
-### Award to Another Account
+## Keys
+
+### From a seed
+
+```swift
+let privateKey = VIZ.PrivateKey(seed: "username" + "active" + "password")!
+let publicKey = privateKey.createPublic()
+
+print(publicKey.address)   // e.g. VIZ7…
+print(privateKey.wif)      // e.g. 5K…
+```
+
+### From WIF or raw bytes
+
+```swift
+// WIF
+let key = VIZ.PrivateKey("5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3")!
+
+// Raw bytes (32-byte private + 1-byte network ID)
+let keyFromBytes = VIZ.PrivateKey(keyData)
+```
+
+### Sign and verify a message
+
+```swift
+let digest = "Hello VIZ".data(using: .utf8)!.sha256Digest
+let signature = try privateKey.sign(message: digest)
+
+let recovered = signature.recover(message: digest, prefix: .mainNet)
+print(recovered?.address ?? "could not recover")
+```
+
+---
+
+## Assets
+
+```swift
+let vizTokens = VIZ.Asset(100.5, .viz)         // "100.500 VIZ"
+let shares    = VIZ.Asset(1000.0, .vests)      // "1000.000000 VESTS"
+
+let parsed = VIZ.Asset("50.000 VIZ")!          // parse from string
+print(parsed.resolvedAmount)  // 50.0
+print(parsed.description)     // "50.000 VIZ"
+```
+
+---
+
+## Common operations
+
+### Fetch accounts
+
+```swift
+let accounts = try await client.send(VIZ.API.GetAccounts(names: ["alice"]))
+if let account = accounts.first {
+    print(account.balance)       // VIZ
+    print(account.energy)        // current energy bar
+    print(account.vestingShares) // VESTS
+}
+```
+
+### Award another account
 
 ```swift
 let award = VIZ.Operation.Award(
     initiator: "alice",
     receiver: "bob",
-    energy: 1000,  // 10% energy
+    energy: 1000,            // 10% energy
     customSequence: 0,
     memo: "Great content!",
     beneficiaries: [
         VIZ.Operation.Beneficiary(account: "charlie", weight: 1000)
     ]
 )
-
-let transaction = VIZ.Transaction(
-    refBlockNum: UInt16(props.headBlockNumber & 0xFFFF),
-    refBlockPrefix: props.headBlockId.prefix,
-    expiration: props.time.addingTimeInterval(60),
-    operations: [award]
-)
-
-let signedTx = try transaction.sign(usingKey: regularKey)
 ```
 
-### Create a New Account
+### Create a new account
 
 ```swift
-// Generate keys for the new account
-let masterKey = VIZ.PrivateKey(seed: "newuser" + "master" + "password")!
-let activeKey = VIZ.PrivateKey(seed: "newuser" + "active" + "password")!
-let regularKey = VIZ.PrivateKey(seed: "newuser" + "regular" + "password")!
-let memoKey = VIZ.PrivateKey(seed: "newuser" + "memo" + "password")!
+let master  = VIZ.PrivateKey(seed: "newuser" + "master"  + "password")!
+let active  = VIZ.PrivateKey(seed: "newuser" + "active"  + "password")!
+let regular = VIZ.PrivateKey(seed: "newuser" + "regular" + "password")!
+let memo    = VIZ.PrivateKey(seed: "newuser" + "memo"    + "password")!
 
-let accountCreate = VIZ.Operation.AccountCreate(
+let create = VIZ.Operation.AccountCreate(
     fee: VIZ.Asset(1.0, .viz),
     creator: "alice",
     newAccountName: "newuser",
-    master: VIZ.Authority(keyAuths: [VIZ.Authority.Auth(masterKey.createPublic())]),
-    active: VIZ.Authority(keyAuths: [VIZ.Authority.Auth(activeKey.createPublic())]),
-    regular: VIZ.Authority(keyAuths: [VIZ.Authority.Auth(regularKey.createPublic())]),
-    memoKey: memoKey.createPublic(),
+    master:  VIZ.Authority(keyAuths: [VIZ.Authority.Auth(master.createPublic())]),
+    active:  VIZ.Authority(keyAuths: [VIZ.Authority.Auth(active.createPublic())]),
+    regular: VIZ.Authority(keyAuths: [VIZ.Authority.Auth(regular.createPublic())]),
+    memoKey: memo.createPublic(),
     jsonMetadata: ""
 )
 ```
 
-### Delegate Vesting Shares
+### Delegate vesting shares
 
 ```swift
 let delegate = VIZ.Operation.DelegateVestingShares(
@@ -167,81 +208,24 @@ let delegate = VIZ.Operation.DelegateVestingShares(
 )
 ```
 
-### Fetch Account History
+### Read account history
 
 ```swift
-let history = VIZ.API.GetAccountHistory(
-    account: "alice",
-    from: -1,
-    limit: 100
+let history = try await client.send(
+    VIZ.API.GetAccountHistory(account: "alice", from: -1, limit: 100)
 )
-
-let operations = try await client.send(history)
-
-for item in operations {
-    print("Block: \(item.value.block)")
-    print("Operation: \(item.value.operation)")
-    print("Timestamp: \(item.value.timestamp)")
+for item in history {
+    print(item.value.block, item.value.timestamp, item.value.operation)
 }
 ```
 
-## Key Management
-
-### Generate Keys from Seed
-
-```swift
-// Generate a private key from account name and password
-let privateKey = VIZ.PrivateKey(seed: "username" + "active" + "password")!
-
-// Derive the public key
-let publicKey = privateKey.createPublic()
-
-print("Public Key: \(publicKey.address)")
-print("Private Key (WIF): \(privateKey.wif)")
-```
-
-### Import Keys
-
-```swift
-// From WIF format
-let privateKey = VIZ.PrivateKey("5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3")!
-
-// From raw bytes
-let keyData = Data(/* 33 bytes with network ID */)
-let privateKey = VIZ.PrivateKey(keyData)
-```
-
-### Sign and Verify Messages
-
-```swift
-let message = "Hello VIZ".data(using: .utf8)!.sha256Digest
-let signature = try privateKey.sign(message: message)
-
-let publicKey = signature.recover(message: message, prefix: .mainNet)
-print("Recovered public key: \(publicKey?.address ?? "none")")
-```
-
-## Working with Assets
-
-```swift
-// Create assets
-let vizTokens = VIZ.Asset(100.5, .viz)        // 100.500 VIZ
-let vestingShares = VIZ.Asset(1000.0, .vests) // 1000.000000 VESTS
-
-// Parse from string
-let asset = VIZ.Asset("50.000 VIZ")!
-
-// Access amount with proper precision
-print(asset.resolvedAmount)  // 50.0
-print(asset.description)     // "50.000 VIZ"
-```
+---
 
 ## Signing URLs
 
-Create delegated signing requests using `viz://` URLs:
+Build delegated signing requests using `viz://` URLs:
 
 ```swift
-// Create a signing URL with an operation
 let transfer = VIZ.Operation.Transfer(
     from: "__signer",
     to: "bob",
@@ -258,102 +242,97 @@ let params = VIZ.VIZURL.Params(
 let signingURL = VIZ.VIZURL(operation: transfer, params: params)!
 print(signingURL.description)
 
-// Resolve the URL to a transaction
+// Resolve a received URL back into a signable transaction:
 let options = VIZ.VIZURL.ResolveOptions(
     refBlockNum: UInt16(props.headBlockNumber & 0xFFFF),
     refBlockPrefix: props.headBlockId.prefix,
     expiration: props.time.addingTimeInterval(60),
     signer: "alice"
 )
-
-let transaction = try signingURL.resolve(with: options)
+let resolved = try signingURL.resolve(with: options)
 ```
 
-## Advanced Features
+---
 
-### Custom Operations
+## Authority management
 
-The library supports all VIZ blockchain operations including:
-
-- Account management (create, update, recovery)
-- Witness operations (voting, updates)
-- Content operations (custom json, awards)
-- Economic operations (transfers, conversions, escrow)
-- And many more...
-
-### Binary Encoding
-
-All types conform to `VIZEncodable` for efficient binary serialization:
-
-```swift
-let encoder = VIZ.VIZEncoder()
-try transaction.binaryEncode(to: encoder)
-let binaryData = encoder.data
-```
-
-### Authority Management
-
-Define complex signing authorities with weights:
+Compose multi-sig authorities with weighted account- and key-based auths:
 
 ```swift
 let authority = VIZ.Authority(
     weightThreshold: 2,
     accountAuths: [
         VIZ.Authority.Auth("alice", weight: 1),
-        VIZ.Authority.Auth("bob", weight: 1)
+        VIZ.Authority.Auth("bob",   weight: 1)
     ],
     keyAuths: [
-        VIZ.Authority.Auth(publicKey, weight: 1)
+        VIZ.Authority.Auth(somePublicKey, weight: 1)
     ]
 )
 ```
 
-## Error Handling
+---
 
-The library uses Swift's structured error handling:
+## Error handling
 
 ```swift
 do {
     let result = try await client.send(request)
-} catch VIZ.Client.Error.responseError(let code, let message) {
-    print("RPC Error \(code): \(message)")
-} catch VIZ.Client.Error.networkError(let message, let error) {
-    print("Network Error: \(message)")
+} catch let VIZ.Client.Error.responseError(code, message) {
+    print("RPC error \(code): \(message)")
+} catch let VIZ.Client.Error.networkError(message, _) {
+    print("Network error: \(message)")
+} catch let VIZ.Client.Error.codingError(message, _) {
+    print("Coding error: \(message)")
 } catch {
     print("Unexpected error: \(error)")
 }
 ```
 
+---
+
 ## Requirements
 
-- Swift 5.5 or later
-- iOS 13.0+ / macOS 10.15+ / tvOS 13.0+ / watchOS 6.0+ / Linux
+- Swift **5.5** or later
+- iOS **13.0+** · macOS **10.15+** · tvOS **13.0+** · watchOS **6.0+** · Linux
 
-## Dependencies
+### Dependencies
 
-- [secp256k1](https://github.com/greymass/secp256k1) - ECDSA signatures and secret/public key operations on curve secp256k1
-- [OrderedDictionary](https://github.com/lukaskubanek/OrderedDictionary) - Ordered dictionary data structure lightweight implementation
+- [secp256k1](https://github.com/greymass/secp256k1) — ECDSA signatures and curve operations
+- [OrderedDictionary](https://github.com/lukaskubanek/OrderedDictionary) — lightweight ordered dictionary
+
+---
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome — please open a Pull Request.
 
-### Running tests
+### Tests
 
-To run all tests simply run `swift test`, this will run both the unit- and integration-tests. To run them separately use the `--filter` flag, e.g. `swift test --filter IntegrationTests`
+```bash
+swift test                              # unit + integration
+swift test --filter UnitTests           # unit only
+swift test --filter IntegrationTests    # integration only (requires live node)
+```
 
-### Developing
+### Local development
 
-Development of the library is best done with Xcode, to generate a `.xcodeproj` you need to run `swift package generate-xcodeproj`.
+Generate an Xcode project:
 
-To enable test coverage display go "Scheme > Manage Schemes..." menu item and edit the "viz-swift-lib" scheme, select the Test configuration and under the Options tab enable "Gather coverage for some targets" and add the `viz-swift-lib` target.
+```bash
+swift package generate-xcodeproj
+```
 
-After adding adding more unit tests the `swift test --generate-linuxmain` command has to be run and the XCTestManifest changes committed for the tests to be run on Linux.
+For test coverage in Xcode: **Scheme → Manage Schemes → viz-swift-lib → Test → Options → Gather coverage for some targets**, then add the `viz-swift-lib` target.
+
+After adding unit tests, register them in `Tests/UnitTests/XCTestManifests.swift` so they also run on Linux.
+
+---
 
 ## License
 
-This library is available under the MIT license. See the LICENSE file for more info.
+MIT — see [LICENSE](LICENSE).
 
 ## Support
 
-For questions and support, please visit the [VIZ.cx community](https://t.me/viz_cx).
+Questions and discussion: [VIZ.cx community on Telegram](https://t.me/viz_cx).

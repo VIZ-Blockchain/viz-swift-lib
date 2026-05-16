@@ -226,8 +226,8 @@ class OperationTest: XCTestCase {
     // Tracked as a Task 6 encode/decode asymmetry.
 
     // testRoundTrip_deleteContent is omitted: "delete_content" is absent from the
-    // OperationId string-switch in AnyOperation.init(from:), so the AnyOperation
-    // round-trip step decodes to Operation.Unknown instead of Operation.DeleteContent.
+    // string-switch in OperationId.init(from:), so the AnyOperation round-trip
+    // step decodes to Operation.Unknown instead of Operation.DeleteContent.
     // Tracked as a Task 6 encode/decode asymmetry.
 
     func testRoundTrip_setWithdrawVestingRoute() {

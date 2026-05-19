@@ -15,7 +15,7 @@ public struct API {
         public let headBlockId: BlockId
         public let time: Date
         public let genesisTime: Date
-        public let currentWitness: String
+        public let currentValidator: String
         public let committeeFund: Asset
         public let committeeRequests: UInt32
         public let currentSupply: Asset
@@ -24,7 +24,7 @@ public struct API {
         public let totalRewardFund: Asset
         public let totalRewardShares: String
         public let inflationCalcBlockNum: UInt32
-        public let inflationWitnessPercent: Int16
+        public let inflationValidatorPercent: Int16
         public let inflationRatio: Int16
         public let averageBlockSize: UInt32
         public let maximumBlockSize: UInt32
@@ -35,6 +35,54 @@ public struct API {
         public let maxVirtualBandwidth: String
         public let currentReserveRatio: UInt64
         public let voteRegenerationPerDay: UInt32
+
+        // CodingKey raw values must be camelCase because the decoder applies
+        // .convertFromSnakeCase before matching. Legacy keys carry the pre-rename
+        // camelCase form so JSON `current_witness` / `inflation_witness_percent`
+        // still decode into the new validator-named properties.
+        enum CodingKeys: String, CodingKey {
+            case headBlockNumber, headBlockId, time, genesisTime,
+                 currentValidator,
+                 committeeFund, committeeRequests, currentSupply,
+                 totalVestingFund, totalVestingShares, totalRewardFund, totalRewardShares,
+                 inflationCalcBlockNum,
+                 inflationValidatorPercent,
+                 inflationRatio, averageBlockSize, maximumBlockSize, currentAslot,
+                 recentSlotsFilled, participationCount, lastIrreversibleBlockNum,
+                 maxVirtualBandwidth, currentReserveRatio, voteRegenerationPerDay
+            case legacyCurrentWitness          = "currentWitness"
+            case legacyInflationWitnessPercent = "inflationWitnessPercent"
+        }
+
+        public init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            self.headBlockNumber = try c.decode(UInt32.self, forKey: .headBlockNumber)
+            self.headBlockId = try c.decode(BlockId.self, forKey: .headBlockId)
+            self.time = try c.decode(Date.self, forKey: .time)
+            self.genesisTime = try c.decode(Date.self, forKey: .genesisTime)
+            self.committeeFund = try c.decode(Asset.self, forKey: .committeeFund)
+            self.committeeRequests = try c.decode(UInt32.self, forKey: .committeeRequests)
+            self.currentSupply = try c.decode(Asset.self, forKey: .currentSupply)
+            self.totalVestingFund = try c.decode(Asset.self, forKey: .totalVestingFund)
+            self.totalVestingShares = try c.decode(Asset.self, forKey: .totalVestingShares)
+            self.totalRewardFund = try c.decode(Asset.self, forKey: .totalRewardFund)
+            self.totalRewardShares = try c.decode(String.self, forKey: .totalRewardShares)
+            self.inflationCalcBlockNum = try c.decode(UInt32.self, forKey: .inflationCalcBlockNum)
+            self.inflationRatio = try c.decode(Int16.self, forKey: .inflationRatio)
+            self.averageBlockSize = try c.decode(UInt32.self, forKey: .averageBlockSize)
+            self.maximumBlockSize = try c.decode(UInt32.self, forKey: .maximumBlockSize)
+            self.currentAslot = try c.decode(UInt32.self, forKey: .currentAslot)
+            self.recentSlotsFilled = try c.decode(String.self, forKey: .recentSlotsFilled)
+            self.participationCount = try c.decode(UInt32.self, forKey: .participationCount)
+            self.lastIrreversibleBlockNum = try c.decode(UInt32.self, forKey: .lastIrreversibleBlockNum)
+            self.maxVirtualBandwidth = try c.decode(String.self, forKey: .maxVirtualBandwidth)
+            self.currentReserveRatio = try c.decode(UInt64.self, forKey: .currentReserveRatio)
+            self.voteRegenerationPerDay = try c.decode(UInt32.self, forKey: .voteRegenerationPerDay)
+            self.currentValidator = try (try? c.decode(String.self, forKey: .currentValidator))
+                ?? c.decode(String.self, forKey: .legacyCurrentWitness)
+            self.inflationValidatorPercent = try (try? c.decode(Int16.self, forKey: .inflationValidatorPercent))
+                ?? c.decode(Int16.self, forKey: .legacyInflationWitnessPercent)
+        }
     }
 
     public struct GetDynamicGlobalProperties: Request {
@@ -226,7 +274,7 @@ public struct API {
         public var params: RequestParams<AnyEncodable>? {
             return RequestParams([AnyEncodable(self.blockNum), AnyEncodable(self.onlyVirtual)])
         }
-        
+
         public var blockNum: Int
         public var onlyVirtual: Bool
         public init(blockNum: Int, onlyVirtual: Bool) {
@@ -236,3 +284,12 @@ public struct API {
     }
 }
 
+// MARK: - Deprecated aliases (witness → validator migration, 2026-05-19)
+
+extension API.DynamicGlobalProperties {
+    @available(*, deprecated, renamed: "currentValidator")
+    public var currentWitness: String { currentValidator }
+
+    @available(*, deprecated, renamed: "inflationValidatorPercent")
+    public var inflationWitnessPercent: Int16 { inflationValidatorPercent }
+}

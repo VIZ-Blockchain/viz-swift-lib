@@ -166,7 +166,77 @@ final class APITest: XCTestCase {
             energy: -1000,
             lastVoteTime: Date()
         )
-        
+
         XCTAssertGreaterThanOrEqual(account.currentEnergy, 0)
+    }
+
+    // MARK: - DynamicGlobalProperties decode
+
+    func testDynamicGlobalProperties_decodesNewKeys() throws {
+        let json = """
+        {
+          "head_block_number": 1,
+          "head_block_id": "00000001aabbccddeeff",
+          "time": "2026-05-19T12:00:00",
+          "genesis_time": "2018-09-29T13:00:00",
+          "current_validator": "alice",
+          "committee_fund": "0.000 VIZ",
+          "committee_requests": 0,
+          "current_supply": "0.000 VIZ",
+          "total_vesting_fund": "0.000 VIZ",
+          "total_vesting_shares": "0.000000 VESTS",
+          "total_reward_fund": "0.000 VIZ",
+          "total_reward_shares": "0",
+          "inflation_calc_block_num": 0,
+          "inflation_validator_percent": 1500,
+          "inflation_ratio": 0,
+          "average_block_size": 0,
+          "maximum_block_size": 0,
+          "current_aslot": 0,
+          "recent_slots_filled": "0",
+          "participation_count": 0,
+          "last_irreversible_block_num": 0,
+          "max_virtual_bandwidth": "0",
+          "current_reserve_ratio": 0,
+          "vote_regeneration_per_day": 0
+        }
+        """
+        let dgp = try TestDecode(API.DynamicGlobalProperties.self, json: json)
+        XCTAssertEqual(dgp.currentValidator, "alice")
+        XCTAssertEqual(dgp.inflationValidatorPercent, 1500)
+    }
+
+    func testDynamicGlobalProperties_decodesLegacyKeys() throws {
+        let json = """
+        {
+          "head_block_number": 1,
+          "head_block_id": "00000001aabbccddeeff",
+          "time": "2026-05-19T12:00:00",
+          "genesis_time": "2018-09-29T13:00:00",
+          "current_witness": "alice",
+          "committee_fund": "0.000 VIZ",
+          "committee_requests": 0,
+          "current_supply": "0.000 VIZ",
+          "total_vesting_fund": "0.000 VIZ",
+          "total_vesting_shares": "0.000000 VESTS",
+          "total_reward_fund": "0.000 VIZ",
+          "total_reward_shares": "0",
+          "inflation_calc_block_num": 0,
+          "inflation_witness_percent": 1500,
+          "inflation_ratio": 0,
+          "average_block_size": 0,
+          "maximum_block_size": 0,
+          "current_aslot": 0,
+          "recent_slots_filled": "0",
+          "participation_count": 0,
+          "last_irreversible_block_num": 0,
+          "max_virtual_bandwidth": "0",
+          "current_reserve_ratio": 0,
+          "vote_regeneration_per_day": 0
+        }
+        """
+        let dgp = try TestDecode(API.DynamicGlobalProperties.self, json: json)
+        XCTAssertEqual(dgp.currentValidator, "alice")
+        XCTAssertEqual(dgp.inflationValidatorPercent, 1500)
     }
 }

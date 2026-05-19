@@ -1,5 +1,21 @@
 import XCTest
 
+extension APITest {
+    static let __allTests = [
+        ("testCurrentEnergy_fullRegenerationCapped", testCurrentEnergy_fullRegenerationCapped),
+        ("testCurrentEnergy_initialAboveCap", testCurrentEnergy_initialAboveCap),
+        ("testCurrentEnergy_negativeEnergy", testCurrentEnergy_negativeEnergy),
+        ("testCurrentEnergy_noRegeneration", testCurrentEnergy_noRegeneration),
+        ("testCurrentEnergy_partialRegeneration", testCurrentEnergy_partialRegeneration),
+        ("testDynamicGlobalProperties_decodesLegacyKeys", testDynamicGlobalProperties_decodesLegacyKeys),
+        ("testDynamicGlobalProperties_decodesNewKeys", testDynamicGlobalProperties_decodesNewKeys),
+        ("testEffectiveVestingShares_allZero", testEffectiveVestingShares_allZero),
+        ("testEffectiveVestingShares_delegatedMoreThanReceived", testEffectiveVestingShares_delegatedMoreThanReceived),
+        ("testEffectiveVestingShares_largeValues", testEffectiveVestingShares_largeValues),
+        ("testEffectiveVestingShares_normalCase", testEffectiveVestingShares_normalCase),
+    ]
+}
+
 extension AssetTest {
     static let __allTests = [
         ("testCustomSymbolPrecisionInference", testCustomSymbolPrecisionInference),
@@ -165,6 +181,7 @@ extension TransactionTest {
 #if !os(macOS)
     public func __allTests() -> [XCTestCaseEntry] {
         return [
+            testCase(APITest.__allTests),
             testCase(AssetTest.__allTests),
             testCase(Base58Test.__allTests),
             testCase(BlockTest.__allTests),

@@ -168,14 +168,14 @@ public struct API {
         public let toWithdraw: Share
         public let withdrawRoutes: UInt16
         public let proxiedVsfVotes: [Share]
-        public let witnessesVotedFor: UInt16
-        public let witnessesVoteWeight: Share
+        public let validatorsVotedFor: UInt16
+        public let validatorsVoteWeight: Share
         public let lastPost: Date
         public let lastRootPost: Date
         public let averageBandwidth: Share
         public let lifetimeBandwidth: Share
         public let lastBandwidthUpdate: Date
-        public let witnessVotes: [String]
+        public let validatorVotes: [String]
         public let valid: Bool
         public let accountSeller: String
         public let accountOfferPrice: Asset
@@ -183,13 +183,13 @@ public struct API {
         public let subaccountSeller: String
         public let subaccountOfferPrice: Asset
         public let subaccountOnSale: Bool
-        
+
         public var effectiveVestingShares: Double {
             vestingShares.resolvedAmount
             + receivedVestingShares.resolvedAmount
             - delegatedVestingShares.resolvedAmount
         }
-        
+
         // TODO: take a Date parameter for testability instead of reading Date() implicitly
         public var currentEnergy: Int {
             let deltaTime = Date().timeIntervalSince(lastVoteTime)
@@ -200,6 +200,129 @@ public struct API {
                 e = 0
             }
             return Int(e)
+        }
+
+        // Explicit memberwise init so callers (including tests) can construct one
+        // with the new validator-named labels. Adding a custom init(from:) below
+        // suppresses Swift's auto-synthesized memberwise init, so this is required.
+        public init(
+            id: Int, name: String,
+            masterAuthority: Authority, activeAuthority: Authority, regularAuthority: Authority,
+            memoKey: PublicKey, jsonMetadata: String,
+            proxy: String, referrer: String,
+            lastMasterUpdate: Date, lastAccountUpdate: Date, created: Date,
+            recoveryAccount: String, lastAccountRecovery: Date,
+            awardedRshares: UInt64, customSequence: UInt64, customSequenceBlockNum: UInt64,
+            energy: Int32, lastVoteTime: Date,
+            balance: Asset, receiverAwards: UInt64, benefactorAwards: UInt64,
+            vestingShares: Asset, delegatedVestingShares: Asset, receivedVestingShares: Asset,
+            vestingWithdrawRate: Asset, nextVestingWithdrawal: Date,
+            withdrawn: Share, toWithdraw: Share, withdrawRoutes: UInt16,
+            proxiedVsfVotes: [Share],
+            validatorsVotedFor: UInt16, validatorsVoteWeight: Share,
+            lastPost: Date, lastRootPost: Date,
+            averageBandwidth: Share, lifetimeBandwidth: Share, lastBandwidthUpdate: Date,
+            validatorVotes: [String], valid: Bool,
+            accountSeller: String, accountOfferPrice: Asset, accountOnSale: Bool,
+            subaccountSeller: String, subaccountOfferPrice: Asset, subaccountOnSale: Bool
+        ) {
+            self.id = id; self.name = name
+            self.masterAuthority = masterAuthority; self.activeAuthority = activeAuthority; self.regularAuthority = regularAuthority
+            self.memoKey = memoKey; self.jsonMetadata = jsonMetadata
+            self.proxy = proxy; self.referrer = referrer
+            self.lastMasterUpdate = lastMasterUpdate; self.lastAccountUpdate = lastAccountUpdate; self.created = created
+            self.recoveryAccount = recoveryAccount; self.lastAccountRecovery = lastAccountRecovery
+            self.awardedRshares = awardedRshares; self.customSequence = customSequence; self.customSequenceBlockNum = customSequenceBlockNum
+            self.energy = energy; self.lastVoteTime = lastVoteTime
+            self.balance = balance; self.receiverAwards = receiverAwards; self.benefactorAwards = benefactorAwards
+            self.vestingShares = vestingShares; self.delegatedVestingShares = delegatedVestingShares; self.receivedVestingShares = receivedVestingShares
+            self.vestingWithdrawRate = vestingWithdrawRate; self.nextVestingWithdrawal = nextVestingWithdrawal
+            self.withdrawn = withdrawn; self.toWithdraw = toWithdraw; self.withdrawRoutes = withdrawRoutes
+            self.proxiedVsfVotes = proxiedVsfVotes
+            self.validatorsVotedFor = validatorsVotedFor; self.validatorsVoteWeight = validatorsVoteWeight
+            self.lastPost = lastPost; self.lastRootPost = lastRootPost
+            self.averageBandwidth = averageBandwidth; self.lifetimeBandwidth = lifetimeBandwidth; self.lastBandwidthUpdate = lastBandwidthUpdate
+            self.validatorVotes = validatorVotes; self.valid = valid
+            self.accountSeller = accountSeller; self.accountOfferPrice = accountOfferPrice; self.accountOnSale = accountOnSale
+            self.subaccountSeller = subaccountSeller; self.subaccountOfferPrice = subaccountOfferPrice; self.subaccountOnSale = subaccountOnSale
+        }
+
+        // CodingKey raw values must be camelCase because the decoder applies
+        // .convertFromSnakeCase before matching. Legacy keys carry the pre-rename
+        // camelCase form so JSON `witnesses_voted_for` / `witnesses_vote_weight`
+        // / `witness_votes` still decode into the new validator-named properties.
+        enum CodingKeys: String, CodingKey {
+            case id, name, masterAuthority, activeAuthority, regularAuthority,
+                 memoKey, jsonMetadata, proxy, referrer,
+                 lastMasterUpdate, lastAccountUpdate, created,
+                 recoveryAccount, lastAccountRecovery,
+                 awardedRshares, customSequence, customSequenceBlockNum,
+                 energy, lastVoteTime, balance, receiverAwards, benefactorAwards,
+                 vestingShares, delegatedVestingShares, receivedVestingShares,
+                 vestingWithdrawRate, nextVestingWithdrawal,
+                 withdrawn, toWithdraw, withdrawRoutes, proxiedVsfVotes,
+                 validatorsVotedFor, validatorsVoteWeight,
+                 lastPost, lastRootPost,
+                 averageBandwidth, lifetimeBandwidth, lastBandwidthUpdate,
+                 validatorVotes, valid,
+                 accountSeller, accountOfferPrice, accountOnSale,
+                 subaccountSeller, subaccountOfferPrice, subaccountOnSale
+            case legacyWitnessesVotedFor   = "witnessesVotedFor"
+            case legacyWitnessesVoteWeight = "witnessesVoteWeight"
+            case legacyWitnessVotes        = "witnessVotes"
+        }
+
+        public init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            self.id = try c.decode(Int.self, forKey: .id)
+            self.name = try c.decode(String.self, forKey: .name)
+            self.masterAuthority = try c.decode(Authority.self, forKey: .masterAuthority)
+            self.activeAuthority = try c.decode(Authority.self, forKey: .activeAuthority)
+            self.regularAuthority = try c.decode(Authority.self, forKey: .regularAuthority)
+            self.memoKey = try c.decode(PublicKey.self, forKey: .memoKey)
+            self.jsonMetadata = try c.decode(String.self, forKey: .jsonMetadata)
+            self.proxy = try c.decode(String.self, forKey: .proxy)
+            self.referrer = try c.decode(String.self, forKey: .referrer)
+            self.lastMasterUpdate = try c.decode(Date.self, forKey: .lastMasterUpdate)
+            self.lastAccountUpdate = try c.decode(Date.self, forKey: .lastAccountUpdate)
+            self.created = try c.decode(Date.self, forKey: .created)
+            self.recoveryAccount = try c.decode(String.self, forKey: .recoveryAccount)
+            self.lastAccountRecovery = try c.decode(Date.self, forKey: .lastAccountRecovery)
+            self.awardedRshares = try c.decode(UInt64.self, forKey: .awardedRshares)
+            self.customSequence = try c.decode(UInt64.self, forKey: .customSequence)
+            self.customSequenceBlockNum = try c.decode(UInt64.self, forKey: .customSequenceBlockNum)
+            self.energy = try c.decode(Int32.self, forKey: .energy)
+            self.lastVoteTime = try c.decode(Date.self, forKey: .lastVoteTime)
+            self.balance = try c.decode(Asset.self, forKey: .balance)
+            self.receiverAwards = try c.decode(UInt64.self, forKey: .receiverAwards)
+            self.benefactorAwards = try c.decode(UInt64.self, forKey: .benefactorAwards)
+            self.vestingShares = try c.decode(Asset.self, forKey: .vestingShares)
+            self.delegatedVestingShares = try c.decode(Asset.self, forKey: .delegatedVestingShares)
+            self.receivedVestingShares = try c.decode(Asset.self, forKey: .receivedVestingShares)
+            self.vestingWithdrawRate = try c.decode(Asset.self, forKey: .vestingWithdrawRate)
+            self.nextVestingWithdrawal = try c.decode(Date.self, forKey: .nextVestingWithdrawal)
+            self.withdrawn = try c.decode(Share.self, forKey: .withdrawn)
+            self.toWithdraw = try c.decode(Share.self, forKey: .toWithdraw)
+            self.withdrawRoutes = try c.decode(UInt16.self, forKey: .withdrawRoutes)
+            self.proxiedVsfVotes = try c.decode([Share].self, forKey: .proxiedVsfVotes)
+            self.lastPost = try c.decode(Date.self, forKey: .lastPost)
+            self.lastRootPost = try c.decode(Date.self, forKey: .lastRootPost)
+            self.averageBandwidth = try c.decode(Share.self, forKey: .averageBandwidth)
+            self.lifetimeBandwidth = try c.decode(Share.self, forKey: .lifetimeBandwidth)
+            self.lastBandwidthUpdate = try c.decode(Date.self, forKey: .lastBandwidthUpdate)
+            self.valid = try c.decode(Bool.self, forKey: .valid)
+            self.accountSeller = try c.decode(String.self, forKey: .accountSeller)
+            self.accountOfferPrice = try c.decode(Asset.self, forKey: .accountOfferPrice)
+            self.accountOnSale = try c.decode(Bool.self, forKey: .accountOnSale)
+            self.subaccountSeller = try c.decode(String.self, forKey: .subaccountSeller)
+            self.subaccountOfferPrice = try c.decode(Asset.self, forKey: .subaccountOfferPrice)
+            self.subaccountOnSale = try c.decode(Bool.self, forKey: .subaccountOnSale)
+            self.validatorsVotedFor = try (try? c.decode(UInt16.self, forKey: .validatorsVotedFor))
+                ?? c.decode(UInt16.self, forKey: .legacyWitnessesVotedFor)
+            self.validatorsVoteWeight = try (try? c.decode(Share.self, forKey: .validatorsVoteWeight))
+                ?? c.decode(Share.self, forKey: .legacyWitnessesVoteWeight)
+            self.validatorVotes = try (try? c.decode([String].self, forKey: .validatorVotes))
+                ?? c.decode([String].self, forKey: .legacyWitnessVotes)
         }
     }
 
@@ -292,4 +415,15 @@ extension API.DynamicGlobalProperties {
 
     @available(*, deprecated, renamed: "inflationValidatorPercent")
     public var inflationWitnessPercent: Int16 { inflationValidatorPercent }
+}
+
+extension API.ExtendedAccount {
+    @available(*, deprecated, renamed: "validatorsVotedFor")
+    public var witnessesVotedFor: UInt16 { validatorsVotedFor }
+
+    @available(*, deprecated, renamed: "validatorsVoteWeight")
+    public var witnessesVoteWeight: API.Share { validatorsVoteWeight }
+
+    @available(*, deprecated, renamed: "validatorVotes")
+    public var witnessVotes: [String] { validatorVotes }
 }

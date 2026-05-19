@@ -13,6 +13,8 @@ extension APITest {
         ("testEffectiveVestingShares_delegatedMoreThanReceived", testEffectiveVestingShares_delegatedMoreThanReceived),
         ("testEffectiveVestingShares_largeValues", testEffectiveVestingShares_largeValues),
         ("testEffectiveVestingShares_normalCase", testEffectiveVestingShares_normalCase),
+        ("testExtendedAccount_decodesLegacyWitnessKeys", testExtendedAccount_decodesLegacyWitnessKeys),
+        ("testExtendedAccount_decodesNewValidatorKeys", testExtendedAccount_decodesNewValidatorKeys),
     ]
 }
 

@@ -52,14 +52,14 @@ final class APITest: XCTestCase {
             toWithdraw: API.Share(0),
             withdrawRoutes: 0,
             proxiedVsfVotes: [],
-            witnessesVotedFor: 0,
-            witnessesVoteWeight: API.Share(0),
+            validatorsVotedFor: 0,
+            validatorsVoteWeight: API.Share(0),
             lastPost: .distantPast,
             lastRootPost: .distantPast,
             averageBandwidth: API.Share(0),
             lifetimeBandwidth: API.Share(0),
             lastBandwidthUpdate: .distantPast,
-            witnessVotes: [],
+            validatorVotes: [],
             valid: true,
             accountSeller: "",
             accountOfferPrice: Asset(0),
@@ -238,5 +238,123 @@ final class APITest: XCTestCase {
         let dgp = try TestDecode(API.DynamicGlobalProperties.self, json: json)
         XCTAssertEqual(dgp.currentValidator, "alice")
         XCTAssertEqual(dgp.inflationValidatorPercent, 1500)
+    }
+
+    // MARK: - ExtendedAccount decode
+
+    func testExtendedAccount_decodesNewValidatorKeys() throws {
+        let json = """
+        {
+          "id": 0,
+          "name": "alice",
+          "master_authority": {"weight_threshold":1,"account_auths":[],"key_auths":[]},
+          "active_authority": {"weight_threshold":1,"account_auths":[],"key_auths":[]},
+          "regular_authority": {"weight_threshold":1,"account_auths":[],"key_auths":[]},
+          "memo_key": "VIZ1111111111111111111111111111111114T1Anm",
+          "json_metadata": "",
+          "proxy": "",
+          "referrer": "",
+          "last_master_update": "1970-01-01T00:00:00",
+          "last_account_update": "1970-01-01T00:00:00",
+          "created": "1970-01-01T00:00:00",
+          "recovery_account": "",
+          "last_account_recovery": "1970-01-01T00:00:00",
+          "awarded_rshares": 0,
+          "custom_sequence": 0,
+          "custom_sequence_block_num": 0,
+          "energy": 0,
+          "last_vote_time": "1970-01-01T00:00:00",
+          "balance": "0.000 VIZ",
+          "receiver_awards": 0,
+          "benefactor_awards": 0,
+          "vesting_shares": "0.000000 VESTS",
+          "delegated_vesting_shares": "0.000000 VESTS",
+          "received_vesting_shares": "0.000000 VESTS",
+          "vesting_withdraw_rate": "0.000000 VESTS",
+          "next_vesting_withdrawal": "1970-01-01T00:00:00",
+          "withdrawn": 0,
+          "to_withdraw": 0,
+          "withdraw_routes": 0,
+          "proxied_vsf_votes": [],
+          "validators_voted_for": 3,
+          "validators_vote_weight": 42,
+          "last_post": "1970-01-01T00:00:00",
+          "last_root_post": "1970-01-01T00:00:00",
+          "average_bandwidth": 0,
+          "lifetime_bandwidth": 0,
+          "last_bandwidth_update": "1970-01-01T00:00:00",
+          "validator_votes": ["carol"],
+          "valid": true,
+          "account_seller": "",
+          "account_offer_price": "0.000 VIZ",
+          "account_on_sale": false,
+          "subaccount_seller": "",
+          "subaccount_offer_price": "0.000 VIZ",
+          "subaccount_on_sale": false
+        }
+        """
+        let acc = try TestDecode(API.ExtendedAccount.self, json: json)
+        XCTAssertEqual(acc.validatorsVotedFor, 3)
+        XCTAssertEqual(acc.validatorsVoteWeight.value, 42)
+        XCTAssertEqual(acc.validatorVotes, ["carol"])
+    }
+
+    func testExtendedAccount_decodesLegacyWitnessKeys() throws {
+        // Construct a JSON object with the LEGACY witness field names and assert that decoding
+        // populates the new validator-named properties.
+        let json = """
+        {
+          "id": 0,
+          "name": "alice",
+          "master_authority": {"weight_threshold":1,"account_auths":[],"key_auths":[]},
+          "active_authority": {"weight_threshold":1,"account_auths":[],"key_auths":[]},
+          "regular_authority": {"weight_threshold":1,"account_auths":[],"key_auths":[]},
+          "memo_key": "VIZ1111111111111111111111111111111114T1Anm",
+          "json_metadata": "",
+          "proxy": "",
+          "referrer": "",
+          "last_master_update": "1970-01-01T00:00:00",
+          "last_account_update": "1970-01-01T00:00:00",
+          "created": "1970-01-01T00:00:00",
+          "recovery_account": "",
+          "last_account_recovery": "1970-01-01T00:00:00",
+          "awarded_rshares": 0,
+          "custom_sequence": 0,
+          "custom_sequence_block_num": 0,
+          "energy": 0,
+          "last_vote_time": "1970-01-01T00:00:00",
+          "balance": "0.000 VIZ",
+          "receiver_awards": 0,
+          "benefactor_awards": 0,
+          "vesting_shares": "0.000000 VESTS",
+          "delegated_vesting_shares": "0.000000 VESTS",
+          "received_vesting_shares": "0.000000 VESTS",
+          "vesting_withdraw_rate": "0.000000 VESTS",
+          "next_vesting_withdrawal": "1970-01-01T00:00:00",
+          "withdrawn": 0,
+          "to_withdraw": 0,
+          "withdraw_routes": 0,
+          "proxied_vsf_votes": [],
+          "witnesses_voted_for": 7,
+          "witnesses_vote_weight": 99,
+          "last_post": "1970-01-01T00:00:00",
+          "last_root_post": "1970-01-01T00:00:00",
+          "average_bandwidth": 0,
+          "lifetime_bandwidth": 0,
+          "last_bandwidth_update": "1970-01-01T00:00:00",
+          "witness_votes": ["alice", "bob"],
+          "valid": true,
+          "account_seller": "",
+          "account_offer_price": "0.000 VIZ",
+          "account_on_sale": false,
+          "subaccount_seller": "",
+          "subaccount_offer_price": "0.000 VIZ",
+          "subaccount_on_sale": false
+        }
+        """
+        let acc = try TestDecode(API.ExtendedAccount.self, json: json)
+        XCTAssertEqual(acc.validatorsVotedFor, 7)
+        XCTAssertEqual(acc.validatorsVoteWeight.value, 99)
+        XCTAssertEqual(acc.validatorVotes, ["alice", "bob"])
     }
 }

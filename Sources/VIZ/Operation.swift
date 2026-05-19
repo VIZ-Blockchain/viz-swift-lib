@@ -287,8 +287,8 @@ public struct Operation {
         }
     }
 
-    /// Sets a witness voting proxy.
-    public struct AccountWitnessProxy: OperationType, Equatable {
+    /// Sets a validator voting proxy.
+    public struct AccountValidatorProxy: OperationType, Equatable {
         public var account: String
         public var proxy: String
 
@@ -1154,7 +1154,7 @@ internal struct AnyOperation: VIZEncodable, Decodable, Sendable {
         case .account_update: op = try container.decode(Operation.AccountUpdate.self)
         case .validator_update: op = try container.decode(Operation.ValidatorUpdate.self)
         case .account_validator_vote: op = try container.decode(Operation.AccountValidatorVote.self)
-        case .account_validator_proxy: op = try container.decode(Operation.AccountWitnessProxy.self)
+        case .account_validator_proxy: op = try container.decode(Operation.AccountValidatorProxy.self)
         // TODO: encode dispatches on Operation.Custom, decode produces Operation.CustomJson — reconcile
         case .custom: op = try container.decode(Operation.CustomJson.self)
         case .request_account_recovery: op = try container.decode(Operation.RequestAccountRecovery.self)
@@ -1241,7 +1241,7 @@ internal struct AnyOperation: VIZEncodable, Decodable, Sendable {
         case let op as Operation.AccountValidatorVote:
             try container.encode(OperationId.account_validator_vote)
             try container.encode(op)
-        case let op as Operation.AccountWitnessProxy:
+        case let op as Operation.AccountValidatorProxy:
             try container.encode(OperationId.account_validator_proxy)
             try container.encode(op)
         // TODO: paired with the decode-side TODO above — pick one canonical type for the `custom` op id
@@ -1335,4 +1335,7 @@ extension Operation {
 
     @available(*, deprecated, renamed: "AccountValidatorVote")
     public typealias AccountWitnessVote = AccountValidatorVote
+
+    @available(*, deprecated, renamed: "AccountValidatorProxy")
+    public typealias AccountWitnessProxy = AccountValidatorProxy
 }

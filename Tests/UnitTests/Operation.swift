@@ -237,12 +237,12 @@ class OperationTest: XCTestCase {
         AssertDecodes(json: legacyJSON, expected)
     }
 
-    func testRoundTrip_accountWitnessProxy() {
+    func testRoundTrip_accountValidatorProxy() {
         let fx = OperationFixture(
-            value: Operation.AccountWitnessProxy(account: "alice", proxy: "proxy1"),
+            value: Operation.AccountValidatorProxy(account: "alice", proxy: "proxy1"),
             json: "{\"account\":\"alice\",\"proxy\":\"proxy1\"}",
             binary: Data("05616c6963650670726f787931"),
-            opIdName: "account_witness_proxy"
+            opIdName: "account_validator_proxy"
         )
         roundTrip(fx)
     }

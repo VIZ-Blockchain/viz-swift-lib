@@ -552,12 +552,18 @@ class OperationTest: XCTestCase {
         )
     }
 
-    func testVirtualDecode_witnessReward() {
+    func testVirtualDecode_validatorReward() {
         assertVirtualDecodes(
-            opIdName: "witness_reward",
-            json: "{\"witness\":\"alice\",\"shares\":\"0.500000 VESTS\"}",
-            Operation.WitnessReward(witness: "alice", shares: Asset(0.5, .vests))
+            opIdName: "validator_reward",
+            json: "{\"validator\":\"alice\",\"shares\":\"0.500000 VESTS\"}",
+            Operation.ValidatorReward(validator: "alice", shares: Asset(0.5, .vests))
         )
+    }
+
+    func testDecode_validatorReward_legacyWitnessKey() {
+        let legacyJSON = "{\"witness\":\"alice\",\"shares\":\"0.500000 VESTS\"}"
+        let expected = Operation.ValidatorReward(validator: "alice", shares: Asset(0.5, .vests))
+        AssertDecodes(json: legacyJSON, expected)
     }
 
     func testUnknownMappedOps_decodeAsUnknown() {

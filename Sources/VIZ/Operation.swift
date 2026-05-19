@@ -990,10 +990,41 @@ public struct Operation {
         public let shares: Asset
     }
 
-    public struct WitnessReward: OperationType, Equatable {
+    public struct ValidatorReward: OperationType, Equatable {
         public var isVirtual: Bool { return true }
-        public let witness: String
+        public let validator: String
         public let shares: Asset
+
+        public init(validator: String, shares: Asset) {
+            self.validator = validator
+            self.shares = shares
+        }
+
+        @available(*, deprecated, message: "Use init(validator:shares:)")
+        public init(witness: String, shares: Asset) {
+            self.init(validator: witness, shares: shares)
+        }
+
+        @available(*, deprecated, renamed: "validator")
+        public var witness: String { validator }
+
+        enum CodingKeys: String, CodingKey {
+            case validator, shares
+            case legacyWitness = "witness"
+        }
+
+        public init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            self.shares = try c.decode(Asset.self, forKey: .shares)
+            self.validator = try (try? c.decode(String.self, forKey: .validator))
+                          ?? c.decode(String.self, forKey: .legacyWitness)
+        }
+
+        public func encode(to encoder: Encoder) throws {
+            var c = encoder.container(keyedBy: CodingKeys.self)
+            try c.encode(validator, forKey: .validator)
+            try c.encode(shares,    forKey: .shares)
+        }
     }
 
     /// Unknown operation, seen if the decoder encounters operation which has no type defined.
@@ -1171,7 +1202,7 @@ internal struct AnyOperation: VIZEncodable, Decodable, Sendable {
         case .shutdown_validator: op = try container.decode(Operation.ShutdownValidator.self)
         case .hardfork: op = try container.decode(Operation.Hardfork.self)
         case .return_vesting_delegation: op = try container.decode(Operation.ReturnVestingDelegation.self)
-        case .validator_reward: op = try container.decode(Operation.WitnessReward.self)
+        case .validator_reward: op = try container.decode(Operation.ValidatorReward.self)
         case .create_invite: op = Operation.Unknown()
         case .claim_invite_balance: op = Operation.Unknown()
         case .invite_registration: op = try container.decode(Operation.InviteRegistration.self)
@@ -1341,4 +1372,7 @@ extension Operation {
 
     @available(*, deprecated, renamed: "ShutdownValidator")
     public typealias ShutdownWitness = ShutdownValidator
+
+    @available(*, deprecated, renamed: "ValidatorReward")
+    public typealias WitnessReward = ValidatorReward
 }

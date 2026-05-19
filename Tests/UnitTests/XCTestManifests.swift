@@ -42,6 +42,7 @@ extension ClientTest {
 extension OperationTest {
     static let __allTests = [
         ("testDecode_accountValidatorVote_legacyWitnessKey", testDecode_accountValidatorVote_legacyWitnessKey),
+        ("testDecode_validatorReward_legacyWitnessKey", testDecode_validatorReward_legacyWitnessKey),
         ("testDecodable", testDecodable),
         ("testEncodable", testEncodable),
         ("testEncodeAsymmetry_definedButNotEncodable", testEncodeAsymmetry_definedButNotEncodable),
@@ -83,7 +84,7 @@ extension OperationTest {
         ("testVirtualDecode_liquidityReward", testVirtualDecode_liquidityReward),
         ("testVirtualDecode_returnVestingDelegation", testVirtualDecode_returnVestingDelegation),
         ("testVirtualDecode_shutdownValidator", testVirtualDecode_shutdownValidator),
-        ("testVirtualDecode_witnessReward", testVirtualDecode_witnessReward),
+        ("testVirtualDecode_validatorReward", testVirtualDecode_validatorReward),
     ]
 }
 

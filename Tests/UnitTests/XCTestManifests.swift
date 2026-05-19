@@ -58,6 +58,15 @@ extension ClientTest {
     ]
 }
 
+extension DeprecatedAliasesTest {
+    static let __allTests = [
+        ("testApiDeprecatedProperties", testApiDeprecatedProperties),
+        ("testBlockHeaderDeprecatedProperties", testBlockHeaderDeprecatedProperties),
+        ("testOperationDeprecatedInits", testOperationDeprecatedInits),
+        ("testOperationTypealiases", testOperationTypealiases),
+    ]
+}
+
 extension OperationTest {
     static let __allTests = [
         ("testDecode_accountValidatorVote_legacyWitnessKey", testDecode_accountValidatorVote_legacyWitnessKey),
@@ -188,6 +197,7 @@ extension TransactionTest {
             testCase(Base58Test.__allTests),
             testCase(BlockTest.__allTests),
             testCase(ClientTest.__allTests),
+            testCase(DeprecatedAliasesTest.__allTests),
             testCase(OperationTest.__allTests),
             testCase(PrivateKeyTest.__allTests),
             testCase(PublicKeyTest.__allTests),

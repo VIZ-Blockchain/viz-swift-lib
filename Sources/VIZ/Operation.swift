@@ -243,16 +243,47 @@ public struct Operation {
         }
     }
 
-    /// Votes for a witness.
-    public struct AccountWitnessVote: OperationType, Equatable {
+    /// Votes for a validator.
+    public struct AccountValidatorVote: OperationType, Equatable {
         public var account: String
-        public var witness: String
+        public var validator: String
         public var approve: Bool
 
-        public init(account: String, witness: String, approve: Bool) {
+        public init(account: String, validator: String, approve: Bool) {
             self.account = account
-            self.witness = witness
+            self.validator = validator
             self.approve = approve
+        }
+
+        @available(*, deprecated, message: "Use init(account:validator:approve:)")
+        public init(account: String, witness: String, approve: Bool) {
+            self.init(account: account, validator: witness, approve: approve)
+        }
+
+        @available(*, deprecated, renamed: "validator")
+        public var witness: String {
+            get { validator }
+            set { validator = newValue }
+        }
+
+        enum CodingKeys: String, CodingKey {
+            case account, validator, approve
+            case legacyWitness = "witness"
+        }
+
+        public init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            self.account = try c.decode(String.self, forKey: .account)
+            self.approve = try c.decode(Bool.self,   forKey: .approve)
+            self.validator = try (try? c.decode(String.self, forKey: .validator))
+                          ?? c.decode(String.self, forKey: .legacyWitness)
+        }
+
+        public func encode(to encoder: Encoder) throws {
+            var c = encoder.container(keyedBy: CodingKeys.self)
+            try c.encode(account,   forKey: .account)
+            try c.encode(validator, forKey: .validator)
+            try c.encode(approve,   forKey: .approve)
         }
     }
 
@@ -1122,7 +1153,7 @@ internal struct AnyOperation: VIZEncodable, Decodable, Sendable {
         case .account_create: op = try container.decode(Operation.AccountCreate.self)
         case .account_update: op = try container.decode(Operation.AccountUpdate.self)
         case .validator_update: op = try container.decode(Operation.ValidatorUpdate.self)
-        case .account_validator_vote: op = try container.decode(Operation.AccountWitnessVote.self)
+        case .account_validator_vote: op = try container.decode(Operation.AccountValidatorVote.self)
         case .account_validator_proxy: op = try container.decode(Operation.AccountWitnessProxy.self)
         // TODO: encode dispatches on Operation.Custom, decode produces Operation.CustomJson — reconcile
         case .custom: op = try container.decode(Operation.CustomJson.self)
@@ -1207,7 +1238,7 @@ internal struct AnyOperation: VIZEncodable, Decodable, Sendable {
         case let op as Operation.ValidatorUpdate:
             try container.encode(OperationId.validator_update)
             try container.encode(op)
-        case let op as Operation.AccountWitnessVote:
+        case let op as Operation.AccountValidatorVote:
             try container.encode(OperationId.account_validator_vote)
             try container.encode(op)
         case let op as Operation.AccountWitnessProxy:
@@ -1301,4 +1332,7 @@ extension Operation.CommentOptions.Extension {
 extension Operation {
     @available(*, deprecated, renamed: "ValidatorUpdate")
     public typealias WitnessUpdate = ValidatorUpdate
+
+    @available(*, deprecated, renamed: "AccountValidatorVote")
+    public typealias AccountWitnessVote = AccountValidatorVote
 }

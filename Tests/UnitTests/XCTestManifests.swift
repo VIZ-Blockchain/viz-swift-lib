@@ -41,13 +41,14 @@ extension ClientTest {
 
 extension OperationTest {
     static let __allTests = [
+        ("testDecode_accountValidatorVote_legacyWitnessKey", testDecode_accountValidatorVote_legacyWitnessKey),
         ("testDecodable", testDecodable),
         ("testEncodable", testEncodable),
         ("testEncodeAsymmetry_definedButNotEncodable", testEncodeAsymmetry_definedButNotEncodable),
         ("testRoundTrip_accountCreate", testRoundTrip_accountCreate),
         ("testRoundTrip_accountUpdate", testRoundTrip_accountUpdate),
+        ("testRoundTrip_accountValidatorVote", testRoundTrip_accountValidatorVote),
         ("testRoundTrip_accountWitnessProxy", testRoundTrip_accountWitnessProxy),
-        ("testRoundTrip_accountWitnessVote", testRoundTrip_accountWitnessVote),
         ("testRoundTrip_award", testRoundTrip_award),
         ("testRoundTrip_benefactorAward", testRoundTrip_benefactorAward),
         ("testRoundTrip_changeRecoveryAccount", testRoundTrip_changeRecoveryAccount),

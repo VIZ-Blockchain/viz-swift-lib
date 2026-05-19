@@ -221,14 +221,20 @@ class OperationTest: XCTestCase {
         roundTrip(fx)
     }
 
-    func testRoundTrip_accountWitnessVote() {
+    func testRoundTrip_accountValidatorVote() {
         let fx = OperationFixture(
-            value: Operation.AccountWitnessVote(account: "alice", witness: "witness1", approve: true),
-            json: "{\"account\":\"alice\",\"witness\":\"witness1\",\"approve\":true}",
+            value: Operation.AccountValidatorVote(account: "alice", validator: "witness1", approve: true),
+            json: "{\"account\":\"alice\",\"validator\":\"witness1\",\"approve\":true}",
             binary: Data("05616c696365087769746e6573733101"),
-            opIdName: "account_witness_vote"
+            opIdName: "account_validator_vote"
         )
         roundTrip(fx)
+    }
+
+    func testDecode_accountValidatorVote_legacyWitnessKey() {
+        let legacyJSON = "{\"account\":\"alice\",\"witness\":\"bob\",\"approve\":true}"
+        let expected = Operation.AccountValidatorVote(account: "alice", validator: "bob", approve: true)
+        AssertDecodes(json: legacyJSON, expected)
     }
 
     func testRoundTrip_accountWitnessProxy() {

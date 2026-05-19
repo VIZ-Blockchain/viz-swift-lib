@@ -1,5 +1,23 @@
 import XCTest
 
+extension APITest {
+    static let __allTests = [
+        ("testCurrentEnergy_fullRegenerationCapped", testCurrentEnergy_fullRegenerationCapped),
+        ("testCurrentEnergy_initialAboveCap", testCurrentEnergy_initialAboveCap),
+        ("testCurrentEnergy_negativeEnergy", testCurrentEnergy_negativeEnergy),
+        ("testCurrentEnergy_noRegeneration", testCurrentEnergy_noRegeneration),
+        ("testCurrentEnergy_partialRegeneration", testCurrentEnergy_partialRegeneration),
+        ("testDynamicGlobalProperties_decodesLegacyKeys", testDynamicGlobalProperties_decodesLegacyKeys),
+        ("testDynamicGlobalProperties_decodesNewKeys", testDynamicGlobalProperties_decodesNewKeys),
+        ("testEffectiveVestingShares_allZero", testEffectiveVestingShares_allZero),
+        ("testEffectiveVestingShares_delegatedMoreThanReceived", testEffectiveVestingShares_delegatedMoreThanReceived),
+        ("testEffectiveVestingShares_largeValues", testEffectiveVestingShares_largeValues),
+        ("testEffectiveVestingShares_normalCase", testEffectiveVestingShares_normalCase),
+        ("testExtendedAccount_decodesLegacyWitnessKeys", testExtendedAccount_decodesLegacyWitnessKeys),
+        ("testExtendedAccount_decodesNewValidatorKeys", testExtendedAccount_decodesNewValidatorKeys),
+    ]
+}
+
 extension AssetTest {
     static let __allTests = [
         ("testCustomSymbolPrecisionInference", testCustomSymbolPrecisionInference),
@@ -26,6 +44,15 @@ extension Base58Test {
 extension BlockTest {
     static let __allTests = [
         ("testCodable", testCodable),
+        ("testDecode_signedBlock_acceptsNewValidatorKeys", testDecode_signedBlock_acceptsNewValidatorKeys),
+    ]
+}
+
+extension ChainIdTest {
+    static let __allTests = [
+        ("testEncodeCustomChainId", testEncodeCustomChainId),
+        ("testMainnetId", testMainnetId),
+        ("testTestnetId", testTestnetId),
     ]
 }
 
@@ -39,15 +66,28 @@ extension ClientTest {
     ]
 }
 
+@available(*, deprecated, message: "Manifest entry for the deprecated witness→validator compile-smoke test class.")
+extension DeprecatedAliasesTest {
+    static let __allTests = [
+        ("testApiDeprecatedProperties", testApiDeprecatedProperties),
+        ("testBlockHeaderDeprecatedProperties", testBlockHeaderDeprecatedProperties),
+        ("testOperationDeprecatedInits", testOperationDeprecatedInits),
+        ("testOperationTypealiases", testOperationTypealiases),
+    ]
+}
+
 extension OperationTest {
     static let __allTests = [
+        ("testDecode_accountValidatorVote_legacyWitnessKey", testDecode_accountValidatorVote_legacyWitnessKey),
+        ("testDecode_validatorReward_legacyWitnessKey", testDecode_validatorReward_legacyWitnessKey),
         ("testDecodable", testDecodable),
         ("testEncodable", testEncodable),
         ("testEncodeAsymmetry_definedButNotEncodable", testEncodeAsymmetry_definedButNotEncodable),
+        ("testOperationId_acceptsLegacyAndNewNames", testOperationId_acceptsLegacyAndNewNames),
         ("testRoundTrip_accountCreate", testRoundTrip_accountCreate),
         ("testRoundTrip_accountUpdate", testRoundTrip_accountUpdate),
-        ("testRoundTrip_accountWitnessProxy", testRoundTrip_accountWitnessProxy),
-        ("testRoundTrip_accountWitnessVote", testRoundTrip_accountWitnessVote),
+        ("testRoundTrip_accountValidatorProxy", testRoundTrip_accountValidatorProxy),
+        ("testRoundTrip_accountValidatorVote", testRoundTrip_accountValidatorVote),
         ("testRoundTrip_award", testRoundTrip_award),
         ("testRoundTrip_benefactorAward", testRoundTrip_benefactorAward),
         ("testRoundTrip_changeRecoveryAccount", testRoundTrip_changeRecoveryAccount),
@@ -64,9 +104,9 @@ extension OperationTest {
         ("testRoundTrip_setWithdrawVestingRoute", testRoundTrip_setWithdrawVestingRoute),
         ("testRoundTrip_transfer", testRoundTrip_transfer),
         ("testRoundTrip_transferToVesting", testRoundTrip_transferToVesting),
+        ("testRoundTrip_validatorUpdate", testRoundTrip_validatorUpdate),
         ("testRoundTrip_vote", testRoundTrip_vote),
         ("testRoundTrip_withdrawVesting", testRoundTrip_withdrawVesting),
-        ("testRoundTrip_witnessUpdate", testRoundTrip_witnessUpdate),
         ("testUnknownMappedOps_decodeAsUnknown", testUnknownMappedOps_decodeAsUnknown),
         ("testVirtual", testVirtual),
         ("testVirtualDecode_authorReward", testVirtualDecode_authorReward),
@@ -81,8 +121,8 @@ extension OperationTest {
         ("testVirtualDecode_interest", testVirtualDecode_interest),
         ("testVirtualDecode_liquidityReward", testVirtualDecode_liquidityReward),
         ("testVirtualDecode_returnVestingDelegation", testVirtualDecode_returnVestingDelegation),
-        ("testVirtualDecode_shutdownWitness", testVirtualDecode_shutdownWitness),
-        ("testVirtualDecode_witnessReward", testVirtualDecode_witnessReward),
+        ("testVirtualDecode_shutdownValidator", testVirtualDecode_shutdownValidator),
+        ("testVirtualDecode_validatorReward", testVirtualDecode_validatorReward),
     ]
 }
 
@@ -91,6 +131,7 @@ extension PrivateKeyTest {
         ("testCreatePublic", testCreatePublic),
         ("testDecodeWif", testDecodeWif),
         ("testEquatable", testEquatable),
+        ("testGeneratePrivateFromSeed", testGeneratePrivateFromSeed),
         ("testHandlesInvalid", testHandlesInvalid),
         ("testSign", testSign),
     ]
@@ -154,7 +195,9 @@ extension VIZEncoderTest {
 
 extension TransactionTest {
     static let __allTests = [
+        ("testAppend", testAppend),
         ("testDecodable", testDecodable),
+        ("testInitWithOp", testInitWithOp),
         ("testSigning", testSigning),
     ]
 }
@@ -162,10 +205,13 @@ extension TransactionTest {
 #if !os(macOS)
     public func __allTests() -> [XCTestCaseEntry] {
         return [
+            testCase(APITest.__allTests),
             testCase(AssetTest.__allTests),
             testCase(Base58Test.__allTests),
             testCase(BlockTest.__allTests),
+            testCase(ChainIdTest.__allTests),
             testCase(ClientTest.__allTests),
+            testCase(DeprecatedAliasesTest.__allTests),
             testCase(OperationTest.__allTests),
             testCase(PrivateKeyTest.__allTests),
             testCase(PublicKeyTest.__allTests),

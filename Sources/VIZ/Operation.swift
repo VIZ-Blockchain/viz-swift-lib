@@ -213,9 +213,9 @@ public struct Operation {
         }
     }
 
-    /// Registers or updates witnesses.
-    public struct WitnessUpdate: OperationType, Equatable {
-        /// Witness chain properties.
+    /// Registers or updates validators.
+    public struct ValidatorUpdate: OperationType, Equatable {
+        /// Validator chain properties.
         public struct Properties: VIZCodable, Equatable, Sendable {
 //            public var accountCreationFee: Asset
 //            public var maximumBlockSize: UInt32
@@ -243,21 +243,52 @@ public struct Operation {
         }
     }
 
-    /// Votes for a witness.
-    public struct AccountWitnessVote: OperationType, Equatable {
+    /// Votes for a validator.
+    public struct AccountValidatorVote: OperationType, Equatable {
         public var account: String
-        public var witness: String
+        public var validator: String
         public var approve: Bool
 
-        public init(account: String, witness: String, approve: Bool) {
+        public init(account: String, validator: String, approve: Bool) {
             self.account = account
-            self.witness = witness
+            self.validator = validator
             self.approve = approve
+        }
+
+        @available(*, deprecated, message: "Use init(account:validator:approve:)")
+        public init(account: String, witness: String, approve: Bool) {
+            self.init(account: account, validator: witness, approve: approve)
+        }
+
+        @available(*, deprecated, renamed: "validator")
+        public var witness: String {
+            get { validator }
+            set { validator = newValue }
+        }
+
+        enum CodingKeys: String, CodingKey {
+            case account, validator, approve
+            case legacyWitness = "witness"
+        }
+
+        public init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            self.account = try c.decode(String.self, forKey: .account)
+            self.approve = try c.decode(Bool.self,   forKey: .approve)
+            self.validator = try (try? c.decode(String.self, forKey: .validator))
+                          ?? c.decode(String.self, forKey: .legacyWitness)
+        }
+
+        public func encode(to encoder: Encoder) throws {
+            var c = encoder.container(keyedBy: CodingKeys.self)
+            try c.encode(account,   forKey: .account)
+            try c.encode(validator, forKey: .validator)
+            try c.encode(approve,   forKey: .approve)
         }
     }
 
-    /// Sets a witness voting proxy.
-    public struct AccountWitnessProxy: OperationType, Equatable {
+    /// Sets a validator voting proxy.
+    public struct AccountValidatorProxy: OperationType, Equatable {
         public var account: String
         public var proxy: String
 
@@ -908,7 +939,7 @@ public struct Operation {
         public let deposited: Asset
     }
 
-    public struct ShutdownWitness: OperationType, Equatable {
+    public struct ShutdownValidator: OperationType, Equatable {
         public var isVirtual: Bool { return true }
         public let owner: String
     }
@@ -959,10 +990,41 @@ public struct Operation {
         public let shares: Asset
     }
 
-    public struct WitnessReward: OperationType, Equatable {
+    public struct ValidatorReward: OperationType, Equatable {
         public var isVirtual: Bool { return true }
-        public let witness: String
+        public let validator: String
         public let shares: Asset
+
+        public init(validator: String, shares: Asset) {
+            self.validator = validator
+            self.shares = shares
+        }
+
+        @available(*, deprecated, message: "Use init(validator:shares:)")
+        public init(witness: String, shares: Asset) {
+            self.init(validator: witness, shares: shares)
+        }
+
+        @available(*, deprecated, renamed: "validator")
+        public var witness: String { validator }
+
+        enum CodingKeys: String, CodingKey {
+            case validator, shares
+            case legacyWitness = "witness"
+        }
+
+        public init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            self.shares = try c.decode(Asset.self, forKey: .shares)
+            self.validator = try (try? c.decode(String.self, forKey: .validator))
+                          ?? c.decode(String.self, forKey: .legacyWitness)
+        }
+
+        public func encode(to encoder: Encoder) throws {
+            var c = encoder.container(keyedBy: CodingKeys.self)
+            try c.encode(validator, forKey: .validator)
+            try c.encode(shares,    forKey: .shares)
+        }
     }
 
     /// Unknown operation, seen if the decoder encounters operation which has no type defined.
@@ -980,9 +1042,9 @@ fileprivate enum OperationId: UInt8, VIZEncodable, Decodable {
     case transfer_to_vesting = 3
     case withdraw_vesting = 4
     case account_update = 5
-    case witness_update = 6
-    case account_witness_vote = 7
-    case account_witness_proxy = 8
+    case validator_update = 6
+    case account_validator_vote = 7
+    case account_validator_proxy = 8
     case delete_content = 9
     case custom = 10
     case set_withdraw_vesting_route = 11
@@ -1004,7 +1066,7 @@ fileprivate enum OperationId: UInt8, VIZEncodable, Decodable {
     case curation_reward = 27
     case content_reward = 28
     case fill_vesting_withdraw = 29
-    case shutdown_witness = 30
+    case shutdown_validator = 30
     case hardfork = 31
     case content_payout_update = 32
     case content_benefactor_reward = 33
@@ -1016,7 +1078,7 @@ fileprivate enum OperationId: UInt8, VIZEncodable, Decodable {
     case committee_approve_request = 39
     case committee_payout_request = 40
     case committee_pay_request = 41
-    case witness_reward = 42
+    case validator_reward = 42
     case create_invite = 43
     case claim_invite_balance = 44
     case invite_registration = 45
@@ -1047,9 +1109,9 @@ fileprivate enum OperationId: UInt8, VIZEncodable, Decodable {
         case "withdraw_vesting": self = .withdraw_vesting
         case "account_create": self = .account_create
         case "account_update": self = .account_update
-        case "witness_update": self = .witness_update
-        case "account_witness_vote": self = .account_witness_vote
-        case "account_witness_proxy": self = .account_witness_proxy
+        case "witness_update", "validator_update": self = .validator_update
+        case "account_witness_vote", "account_validator_vote": self = .account_validator_vote
+        case "account_witness_proxy", "account_validator_proxy": self = .account_validator_proxy
         case "custom": self = .custom
         case "set_withdraw_vesting_route": self = .set_withdraw_vesting_route
         case "request_account_recovery": self = .request_account_recovery
@@ -1063,10 +1125,10 @@ fileprivate enum OperationId: UInt8, VIZEncodable, Decodable {
         case "author_reward": self = .author_reward
         case "curation_reward": self = .curation_reward
         case "fill_vesting_withdraw": self = .fill_vesting_withdraw
-        case "shutdown_witness": self = .shutdown_witness
+        case "shutdown_witness", "shutdown_validator": self = .shutdown_validator
         case "hardfork": self = .hardfork
         case "return_vesting_delegation": self = .return_vesting_delegation
-        case "witness_reward": self = .witness_reward
+        case "witness_reward", "validator_reward": self = .validator_reward
         case "create_invite": self = .create_invite
         case "claim_invite_balance": self = .claim_invite_balance
         case "invite_registration": self = .invite_registration
@@ -1121,9 +1183,9 @@ internal struct AnyOperation: VIZEncodable, Decodable, Sendable {
         case .withdraw_vesting: op = try container.decode(Operation.WithdrawVesting.self)
         case .account_create: op = try container.decode(Operation.AccountCreate.self)
         case .account_update: op = try container.decode(Operation.AccountUpdate.self)
-        case .witness_update: op = try container.decode(Operation.WitnessUpdate.self)
-        case .account_witness_vote: op = try container.decode(Operation.AccountWitnessVote.self)
-        case .account_witness_proxy: op = try container.decode(Operation.AccountWitnessProxy.self)
+        case .validator_update: op = try container.decode(Operation.ValidatorUpdate.self)
+        case .account_validator_vote: op = try container.decode(Operation.AccountValidatorVote.self)
+        case .account_validator_proxy: op = try container.decode(Operation.AccountValidatorProxy.self)
         // TODO: encode dispatches on Operation.Custom, decode produces Operation.CustomJson — reconcile
         case .custom: op = try container.decode(Operation.CustomJson.self)
         case .request_account_recovery: op = try container.decode(Operation.RequestAccountRecovery.self)
@@ -1137,10 +1199,10 @@ internal struct AnyOperation: VIZEncodable, Decodable, Sendable {
         case .author_reward: op = try container.decode(Operation.AuthorReward.self)
         case .curation_reward: op = try container.decode(Operation.CurationReward.self)
         case .fill_vesting_withdraw: op = try container.decode(Operation.FillVestingWithdraw.self)
-        case .shutdown_witness: op = try container.decode(Operation.ShutdownWitness.self)
+        case .shutdown_validator: op = try container.decode(Operation.ShutdownValidator.self)
         case .hardfork: op = try container.decode(Operation.Hardfork.self)
         case .return_vesting_delegation: op = try container.decode(Operation.ReturnVestingDelegation.self)
-        case .witness_reward: op = try container.decode(Operation.WitnessReward.self)
+        case .validator_reward: op = try container.decode(Operation.ValidatorReward.self)
         case .create_invite: op = Operation.Unknown()
         case .claim_invite_balance: op = Operation.Unknown()
         case .invite_registration: op = try container.decode(Operation.InviteRegistration.self)
@@ -1204,14 +1266,14 @@ internal struct AnyOperation: VIZEncodable, Decodable, Sendable {
         case let op as Operation.AccountUpdate:
             try container.encode(OperationId.account_update)
             try container.encode(op)
-        case let op as Operation.WitnessUpdate:
-            try container.encode(OperationId.witness_update)
+        case let op as Operation.ValidatorUpdate:
+            try container.encode(OperationId.validator_update)
             try container.encode(op)
-        case let op as Operation.AccountWitnessVote:
-            try container.encode(OperationId.account_witness_vote)
+        case let op as Operation.AccountValidatorVote:
+            try container.encode(OperationId.account_validator_vote)
             try container.encode(op)
-        case let op as Operation.AccountWitnessProxy:
-            try container.encode(OperationId.account_witness_proxy)
+        case let op as Operation.AccountValidatorProxy:
+            try container.encode(OperationId.account_validator_proxy)
             try container.encode(op)
         // TODO: paired with the decode-side TODO above — pick one canonical type for the `custom` op id
         case let op as Operation.Custom:
@@ -1294,4 +1356,23 @@ extension Operation.CommentOptions.Extension {
             throw EncodingError.invalidValue(self, EncodingError.Context(codingPath: container.codingPath, debugDescription: "Encountered unknown comment extension"))
         }
     }
+}
+
+// MARK: - Deprecated aliases (witness → validator migration, 2026-05-19)
+
+extension Operation {
+    @available(*, deprecated, renamed: "ValidatorUpdate")
+    public typealias WitnessUpdate = ValidatorUpdate
+
+    @available(*, deprecated, renamed: "AccountValidatorVote")
+    public typealias AccountWitnessVote = AccountValidatorVote
+
+    @available(*, deprecated, renamed: "AccountValidatorProxy")
+    public typealias AccountWitnessProxy = AccountValidatorProxy
+
+    @available(*, deprecated, renamed: "ShutdownValidator")
+    public typealias ShutdownWitness = ShutdownValidator
+
+    @available(*, deprecated, renamed: "ValidatorReward")
+    public typealias WitnessReward = ValidatorReward
 }

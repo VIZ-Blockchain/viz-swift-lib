@@ -204,39 +204,45 @@ class OperationTest: XCTestCase {
         roundTrip(fx)
     }
 
-    func testRoundTrip_witnessUpdate() {
+    func testRoundTrip_validatorUpdate() {
         let signingKey = PublicKey("VIZ8LMF1uA5GAPfsAe1dieBRATQfhgi1ZqXYRFkaj1WaaWx9vVjau")!
         let fx = OperationFixture(
-            value: Operation.WitnessUpdate(
+            value: Operation.ValidatorUpdate(
                 owner: "alice",
                 url: "https://example.com",
                 blockSigningKey: signingKey,
-                props: Operation.WitnessUpdate.Properties(),
+                props: Operation.ValidatorUpdate.Properties(),
                 fee: Asset(0, .viz)
             ),
             json: "{\"owner\":\"alice\",\"url\":\"https:\\/\\/example.com\",\"block_signing_key\":\"VIZ8LMF1uA5GAPfsAe1dieBRATQfhgi1ZqXYRFkaj1WaaWx9vVjau\",\"props\":{},\"fee\":\"0.000 VIZ\"}",
             binary: Data("05616c6963651368747470733a2f2f6578616d706c652e636f6d03c5ce92a15f7120ae896f348c4ce505d9573cf0816338a478dd9845fe7b1ec59b00000000000000000356495a00000000"),
-            opIdName: "witness_update"
+            opIdName: "validator_update"
         )
         roundTrip(fx)
     }
 
-    func testRoundTrip_accountWitnessVote() {
+    func testRoundTrip_accountValidatorVote() {
         let fx = OperationFixture(
-            value: Operation.AccountWitnessVote(account: "alice", witness: "witness1", approve: true),
-            json: "{\"account\":\"alice\",\"witness\":\"witness1\",\"approve\":true}",
+            value: Operation.AccountValidatorVote(account: "alice", validator: "witness1", approve: true),
+            json: "{\"account\":\"alice\",\"validator\":\"witness1\",\"approve\":true}",
             binary: Data("05616c696365087769746e6573733101"),
-            opIdName: "account_witness_vote"
+            opIdName: "account_validator_vote"
         )
         roundTrip(fx)
     }
 
-    func testRoundTrip_accountWitnessProxy() {
+    func testDecode_accountValidatorVote_legacyWitnessKey() {
+        let legacyJSON = "{\"account\":\"alice\",\"witness\":\"bob\",\"approve\":true}"
+        let expected = Operation.AccountValidatorVote(account: "alice", validator: "bob", approve: true)
+        AssertDecodes(json: legacyJSON, expected)
+    }
+
+    func testRoundTrip_accountValidatorProxy() {
         let fx = OperationFixture(
-            value: Operation.AccountWitnessProxy(account: "alice", proxy: "proxy1"),
+            value: Operation.AccountValidatorProxy(account: "alice", proxy: "proxy1"),
             json: "{\"account\":\"alice\",\"proxy\":\"proxy1\"}",
             binary: Data("05616c6963650670726f787931"),
-            opIdName: "account_witness_proxy"
+            opIdName: "account_validator_proxy"
         )
         roundTrip(fx)
     }
@@ -501,11 +507,11 @@ class OperationTest: XCTestCase {
         )
     }
 
-    func testVirtualDecode_shutdownWitness() {
+    func testVirtualDecode_shutdownValidator() {
         assertVirtualDecodes(
-            opIdName: "shutdown_witness",
+            opIdName: "shutdown_validator",
             json: "{\"owner\":\"alice\"}",
-            Operation.ShutdownWitness(owner: "alice")
+            Operation.ShutdownValidator(owner: "alice")
         )
     }
 
@@ -546,12 +552,18 @@ class OperationTest: XCTestCase {
         )
     }
 
-    func testVirtualDecode_witnessReward() {
+    func testVirtualDecode_validatorReward() {
         assertVirtualDecodes(
-            opIdName: "witness_reward",
-            json: "{\"witness\":\"alice\",\"shares\":\"0.500000 VESTS\"}",
-            Operation.WitnessReward(witness: "alice", shares: Asset(0.5, .vests))
+            opIdName: "validator_reward",
+            json: "{\"validator\":\"alice\",\"shares\":\"0.500000 VESTS\"}",
+            Operation.ValidatorReward(validator: "alice", shares: Asset(0.5, .vests))
         )
+    }
+
+    func testDecode_validatorReward_legacyWitnessKey() {
+        let legacyJSON = "{\"witness\":\"alice\",\"shares\":\"0.500000 VESTS\"}"
+        let expected = Operation.ValidatorReward(validator: "alice", shares: Asset(0.5, .vests))
+        AssertDecodes(json: legacyJSON, expected)
     }
 
     func testUnknownMappedOps_decodeAsUnknown() {
@@ -678,5 +690,51 @@ class OperationTest: XCTestCase {
         ))), "AccountCreateWithDelegation")
 
         // ReportOverProduction: skipped — BlockId has no public initializer; covered by encode-dispatch switch's lack of a case.
+    }
+
+    func testOperationId_acceptsLegacyAndNewNames() {
+        // Each pair: (legacy op_id string, new op_id string). Both should decode to the same
+        // canonical Swift type after the witness→validator rename.
+        let cases: [(String, OperationType.Type)] = [
+            ("witness_update",         Operation.ValidatorUpdate.self),
+            ("account_witness_vote",   Operation.AccountValidatorVote.self),
+            ("account_witness_proxy",  Operation.AccountValidatorProxy.self),
+            ("shutdown_witness",       Operation.ShutdownValidator.self),
+            ("witness_reward",         Operation.ValidatorReward.self),
+        ]
+        let bodies = [
+            "{\"owner\":\"alice\",\"url\":\"\",\"block_signing_key\":\"VIZ1111111111111111111111111111111114T1Anm\",\"props\":{},\"fee\":\"0.000 VIZ\"}",
+            "{\"account\":\"alice\",\"witness\":\"bob\",\"approve\":true}",
+            "{\"account\":\"alice\",\"proxy\":\"bob\"}",
+            "{\"owner\":\"alice\"}",
+            "{\"witness\":\"alice\",\"shares\":\"0.500000 VESTS\"}",
+        ]
+        let newNames = [
+            "validator_update",
+            "account_validator_vote",
+            "account_validator_proxy",
+            "shutdown_validator",
+            "validator_reward",
+        ]
+        for ((legacy, expectedType), body) in zip(cases, bodies) {
+            let wrapped = "[\"\(legacy)\",\(body)]"
+            do {
+                let any = try TestDecode(AnyOperation.self, json: wrapped)
+                XCTAssertTrue(type(of: any.operation) == expectedType,
+                              "Legacy name \(legacy) decoded to \(type(of: any.operation)), expected \(expectedType)")
+            } catch {
+                XCTFail("Legacy decode of \(legacy) failed: \(error)")
+            }
+        }
+        for ((newName, expectedType), body) in zip(zip(newNames, cases.map { $0.1 }), bodies) {
+            let wrapped = "[\"\(newName)\",\(body)]"
+            do {
+                let any = try TestDecode(AnyOperation.self, json: wrapped)
+                XCTAssertTrue(type(of: any.operation) == expectedType,
+                              "New name \(newName) decoded to \(type(of: any.operation)), expected \(expectedType)")
+            } catch {
+                XCTFail("New-name decode of \(newName) failed: \(error)")
+            }
+        }
     }
 }

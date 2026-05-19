@@ -44,8 +44,8 @@ fileprivate protocol _BlockHeader: Codable {
     var previous: BlockId { get }
     /// Time when block was generated.
     var timestamp: Date { get }
-    /// Witness who produced it.
-    var witness: String { get }
+    /// Validator who produced it.
+    var validator: String { get }
     /// Merkle root hash, ripemd160.
     var transactionMerkleRoot: Data { get }
     /// Block extensions.
@@ -56,19 +56,71 @@ fileprivate protocol _BlockHeader: Codable {
 public struct BlockHeader: _BlockHeader {
     public let previous: BlockId
     public let timestamp: Date
-    public let witness: String
+    public let validator: String
     public let transactionMerkleRoot: Data
     public let extensions: [BlockExtension]
+
+    enum CodingKeys: String, CodingKey {
+        case previous, timestamp, validator, transactionMerkleRoot, extensions
+        case legacyWitness = "witness"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        self.previous = try c.decode(BlockId.self, forKey: .previous)
+        self.timestamp = try c.decode(Date.self, forKey: .timestamp)
+        self.transactionMerkleRoot = try c.decode(Data.self, forKey: .transactionMerkleRoot)
+        self.extensions = try c.decode([BlockExtension].self, forKey: .extensions)
+        self.validator = try (try? c.decode(String.self, forKey: .validator))
+                          ?? c.decode(String.self, forKey: .legacyWitness)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(previous, forKey: .previous)
+        try c.encode(timestamp, forKey: .timestamp)
+        try c.encode(validator, forKey: .validator)
+        try c.encode(transactionMerkleRoot, forKey: .transactionMerkleRoot)
+        try c.encode(extensions, forKey: .extensions)
+    }
 }
 
 /// A type representing a signed VIZ block header.
 public struct SignedBlockHeader: _BlockHeader, Equatable, Sendable {
     public let previous: BlockId
     public let timestamp: Date
-    public let witness: String
+    public let validator: String
     public let transactionMerkleRoot: Data
     public let extensions: [BlockExtension]
-    public let witnessSignature: Signature
+    public let validatorSignature: Signature
+
+    enum CodingKeys: String, CodingKey {
+        case previous, timestamp, validator, transactionMerkleRoot, extensions, validatorSignature
+        case legacyWitness = "witness"
+        case legacyWitnessSignature = "witnessSignature"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        self.previous = try c.decode(BlockId.self, forKey: .previous)
+        self.timestamp = try c.decode(Date.self, forKey: .timestamp)
+        self.transactionMerkleRoot = try c.decode(Data.self, forKey: .transactionMerkleRoot)
+        self.extensions = try c.decode([BlockExtension].self, forKey: .extensions)
+        self.validator = try (try? c.decode(String.self, forKey: .validator))
+                          ?? c.decode(String.self, forKey: .legacyWitness)
+        self.validatorSignature = try (try? c.decode(Signature.self, forKey: .validatorSignature))
+                                   ?? c.decode(Signature.self, forKey: .legacyWitnessSignature)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(previous, forKey: .previous)
+        try c.encode(timestamp, forKey: .timestamp)
+        try c.encode(validator, forKey: .validator)
+        try c.encode(transactionMerkleRoot, forKey: .transactionMerkleRoot)
+        try c.encode(extensions, forKey: .extensions)
+        try c.encode(validatorSignature, forKey: .validatorSignature)
+    }
 }
 
 /// A type representing a VIZ block.
@@ -91,10 +143,10 @@ public struct SignedBlock: _BlockHeader, Equatable, Sendable {
     // Header proxy.
     public var previous: BlockId { return self.header.previous }
     public var timestamp: Date { return self.header.timestamp }
-    public var witness: String { return self.header.witness }
+    public var validator: String { return self.header.validator }
     public var transactionMerkleRoot: Data { return self.header.transactionMerkleRoot }
     public var extensions: [BlockExtension] { return self.header.extensions }
-    public var witnessSignature: Signature { return self.header.witnessSignature }
+    public var validatorSignature: Signature { return self.header.validatorSignature }
 
     private enum Key: CodingKey {
         case transactions
@@ -135,4 +187,27 @@ extension BlockExtension: Codable {
             break
         }
     }
+}
+
+// MARK: - Deprecated aliases (witness → validator migration, 2026-05-19)
+
+extension BlockHeader {
+    @available(*, deprecated, renamed: "validator")
+    public var witness: String { validator }
+}
+
+extension SignedBlockHeader {
+    @available(*, deprecated, renamed: "validator")
+    public var witness: String { validator }
+
+    @available(*, deprecated, renamed: "validatorSignature")
+    public var witnessSignature: Signature { validatorSignature }
+}
+
+extension SignedBlock {
+    @available(*, deprecated, renamed: "validator")
+    public var witness: String { validator }
+
+    @available(*, deprecated, renamed: "validatorSignature")
+    public var witnessSignature: Signature { validatorSignature }
 }

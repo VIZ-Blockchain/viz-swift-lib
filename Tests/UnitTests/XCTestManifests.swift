@@ -26,6 +26,7 @@ extension Base58Test {
 extension BlockTest {
     static let __allTests = [
         ("testCodable", testCodable),
+        ("testDecode_signedBlock_acceptsNewValidatorKeys", testDecode_signedBlock_acceptsNewValidatorKeys),
     ]
 }
 

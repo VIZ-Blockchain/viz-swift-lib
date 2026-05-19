@@ -43,8 +43,15 @@ extension Request {
             return "operation_history"
         case "get_active_paid_subscriptions", "get_inactive_paid_subscriptions", "get_paid_subscription_options", "get_paid_subscription_status", "get_paid_subscriptions":
             return "paid_subscription_api"
-        case "get_active_witnesses", "get_witness_by_account", "get_witness_count", "get_witness_schedule", "get_witnesses", "get_witnesses_by_counted_vote", "get_witnesses_by_vote", "lookup_witness_accounts":
-            return "witness_api"
+        case "get_active_witnesses", "get_active_validators",
+             "get_witness_by_account", "get_validator_by_account",
+             "get_witness_count", "get_validator_count",
+             "get_witness_schedule", "get_validator_schedule",
+             "get_witnesses", "get_validators",
+             "get_witnesses_by_counted_vote", "get_validators_by_counted_vote",
+             "get_witnesses_by_vote", "get_validators_by_vote",
+             "lookup_witness_accounts", "lookup_validator_accounts":
+            return "validator_api"
         default:
             return method
         }

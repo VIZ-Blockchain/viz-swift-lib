@@ -48,6 +48,14 @@ extension BlockTest {
     ]
 }
 
+extension ChainIdTest {
+    static let __allTests = [
+        ("testEncodeCustomChainId", testEncodeCustomChainId),
+        ("testMainnetId", testMainnetId),
+        ("testTestnetId", testTestnetId),
+    ]
+}
+
 extension ClientTest {
     static let __allTests = [
         ("testBadRpcResponse", testBadRpcResponse),
@@ -58,6 +66,7 @@ extension ClientTest {
     ]
 }
 
+@available(*, deprecated, message: "Manifest entry for the deprecated witness→validator compile-smoke test class.")
 extension DeprecatedAliasesTest {
     static let __allTests = [
         ("testApiDeprecatedProperties", testApiDeprecatedProperties),
@@ -74,6 +83,7 @@ extension OperationTest {
         ("testDecodable", testDecodable),
         ("testEncodable", testEncodable),
         ("testEncodeAsymmetry_definedButNotEncodable", testEncodeAsymmetry_definedButNotEncodable),
+        ("testOperationId_acceptsLegacyAndNewNames", testOperationId_acceptsLegacyAndNewNames),
         ("testRoundTrip_accountCreate", testRoundTrip_accountCreate),
         ("testRoundTrip_accountUpdate", testRoundTrip_accountUpdate),
         ("testRoundTrip_accountValidatorProxy", testRoundTrip_accountValidatorProxy),
@@ -121,6 +131,7 @@ extension PrivateKeyTest {
         ("testCreatePublic", testCreatePublic),
         ("testDecodeWif", testDecodeWif),
         ("testEquatable", testEquatable),
+        ("testGeneratePrivateFromSeed", testGeneratePrivateFromSeed),
         ("testHandlesInvalid", testHandlesInvalid),
         ("testSign", testSign),
     ]
@@ -184,7 +195,9 @@ extension VIZEncoderTest {
 
 extension TransactionTest {
     static let __allTests = [
+        ("testAppend", testAppend),
         ("testDecodable", testDecodable),
+        ("testInitWithOp", testInitWithOp),
         ("testSigning", testSigning),
     ]
 }
@@ -196,6 +209,7 @@ extension TransactionTest {
             testCase(AssetTest.__allTests),
             testCase(Base58Test.__allTests),
             testCase(BlockTest.__allTests),
+            testCase(ChainIdTest.__allTests),
             testCase(ClientTest.__allTests),
             testCase(DeprecatedAliasesTest.__allTests),
             testCase(OperationTest.__allTests),

@@ -694,13 +694,13 @@ class OperationTest: XCTestCase {
 
     func testOperationId_acceptsLegacyAndNewNames() {
         // Each pair: (legacy op_id string, new op_id string). Both should decode to the same
-        // Swift type (still using the pre-rename type names — those get renamed in later tasks).
+        // canonical Swift type after the witness→validator rename.
         let cases: [(String, OperationType.Type)] = [
-            ("witness_update",         Operation.WitnessUpdate.self),
-            ("account_witness_vote",   Operation.AccountWitnessVote.self),
-            ("account_witness_proxy",  Operation.AccountWitnessProxy.self),
-            ("shutdown_witness",       Operation.ShutdownWitness.self),
-            ("witness_reward",         Operation.WitnessReward.self),
+            ("witness_update",         Operation.ValidatorUpdate.self),
+            ("account_witness_vote",   Operation.AccountValidatorVote.self),
+            ("account_witness_proxy",  Operation.AccountValidatorProxy.self),
+            ("shutdown_witness",       Operation.ShutdownValidator.self),
+            ("witness_reward",         Operation.ValidatorReward.self),
         ]
         let bodies = [
             "{\"owner\":\"alice\",\"url\":\"\",\"block_signing_key\":\"VIZ1111111111111111111111111111111114T1Anm\",\"props\":{},\"fee\":\"0.000 VIZ\"}",

@@ -507,11 +507,11 @@ class OperationTest: XCTestCase {
         )
     }
 
-    func testVirtualDecode_shutdownWitness() {
+    func testVirtualDecode_shutdownValidator() {
         assertVirtualDecodes(
-            opIdName: "shutdown_witness",
+            opIdName: "shutdown_validator",
             json: "{\"owner\":\"alice\"}",
-            Operation.ShutdownWitness(owner: "alice")
+            Operation.ShutdownValidator(owner: "alice")
         )
     }
 

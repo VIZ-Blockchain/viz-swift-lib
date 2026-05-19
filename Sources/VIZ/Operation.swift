@@ -939,7 +939,7 @@ public struct Operation {
         public let deposited: Asset
     }
 
-    public struct ShutdownWitness: OperationType, Equatable {
+    public struct ShutdownValidator: OperationType, Equatable {
         public var isVirtual: Bool { return true }
         public let owner: String
     }
@@ -1168,7 +1168,7 @@ internal struct AnyOperation: VIZEncodable, Decodable, Sendable {
         case .author_reward: op = try container.decode(Operation.AuthorReward.self)
         case .curation_reward: op = try container.decode(Operation.CurationReward.self)
         case .fill_vesting_withdraw: op = try container.decode(Operation.FillVestingWithdraw.self)
-        case .shutdown_validator: op = try container.decode(Operation.ShutdownWitness.self)
+        case .shutdown_validator: op = try container.decode(Operation.ShutdownValidator.self)
         case .hardfork: op = try container.decode(Operation.Hardfork.self)
         case .return_vesting_delegation: op = try container.decode(Operation.ReturnVestingDelegation.self)
         case .validator_reward: op = try container.decode(Operation.WitnessReward.self)
@@ -1338,4 +1338,7 @@ extension Operation {
 
     @available(*, deprecated, renamed: "AccountValidatorProxy")
     public typealias AccountWitnessProxy = AccountValidatorProxy
+
+    @available(*, deprecated, renamed: "ShutdownValidator")
+    public typealias ShutdownWitness = ShutdownValidator
 }

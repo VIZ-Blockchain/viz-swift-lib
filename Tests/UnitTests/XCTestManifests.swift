@@ -82,7 +82,7 @@ extension OperationTest {
         ("testVirtualDecode_interest", testVirtualDecode_interest),
         ("testVirtualDecode_liquidityReward", testVirtualDecode_liquidityReward),
         ("testVirtualDecode_returnVestingDelegation", testVirtualDecode_returnVestingDelegation),
-        ("testVirtualDecode_shutdownWitness", testVirtualDecode_shutdownWitness),
+        ("testVirtualDecode_shutdownValidator", testVirtualDecode_shutdownValidator),
         ("testVirtualDecode_witnessReward", testVirtualDecode_witnessReward),
     ]
 }

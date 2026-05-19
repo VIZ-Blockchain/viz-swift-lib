@@ -980,9 +980,9 @@ fileprivate enum OperationId: UInt8, VIZEncodable, Decodable {
     case transfer_to_vesting = 3
     case withdraw_vesting = 4
     case account_update = 5
-    case witness_update = 6
-    case account_witness_vote = 7
-    case account_witness_proxy = 8
+    case validator_update = 6
+    case account_validator_vote = 7
+    case account_validator_proxy = 8
     case delete_content = 9
     case custom = 10
     case set_withdraw_vesting_route = 11
@@ -1004,7 +1004,7 @@ fileprivate enum OperationId: UInt8, VIZEncodable, Decodable {
     case curation_reward = 27
     case content_reward = 28
     case fill_vesting_withdraw = 29
-    case shutdown_witness = 30
+    case shutdown_validator = 30
     case hardfork = 31
     case content_payout_update = 32
     case content_benefactor_reward = 33
@@ -1016,7 +1016,7 @@ fileprivate enum OperationId: UInt8, VIZEncodable, Decodable {
     case committee_approve_request = 39
     case committee_payout_request = 40
     case committee_pay_request = 41
-    case witness_reward = 42
+    case validator_reward = 42
     case create_invite = 43
     case claim_invite_balance = 44
     case invite_registration = 45
@@ -1047,9 +1047,9 @@ fileprivate enum OperationId: UInt8, VIZEncodable, Decodable {
         case "withdraw_vesting": self = .withdraw_vesting
         case "account_create": self = .account_create
         case "account_update": self = .account_update
-        case "witness_update": self = .witness_update
-        case "account_witness_vote": self = .account_witness_vote
-        case "account_witness_proxy": self = .account_witness_proxy
+        case "witness_update", "validator_update": self = .validator_update
+        case "account_witness_vote", "account_validator_vote": self = .account_validator_vote
+        case "account_witness_proxy", "account_validator_proxy": self = .account_validator_proxy
         case "custom": self = .custom
         case "set_withdraw_vesting_route": self = .set_withdraw_vesting_route
         case "request_account_recovery": self = .request_account_recovery
@@ -1063,10 +1063,10 @@ fileprivate enum OperationId: UInt8, VIZEncodable, Decodable {
         case "author_reward": self = .author_reward
         case "curation_reward": self = .curation_reward
         case "fill_vesting_withdraw": self = .fill_vesting_withdraw
-        case "shutdown_witness": self = .shutdown_witness
+        case "shutdown_witness", "shutdown_validator": self = .shutdown_validator
         case "hardfork": self = .hardfork
         case "return_vesting_delegation": self = .return_vesting_delegation
-        case "witness_reward": self = .witness_reward
+        case "witness_reward", "validator_reward": self = .validator_reward
         case "create_invite": self = .create_invite
         case "claim_invite_balance": self = .claim_invite_balance
         case "invite_registration": self = .invite_registration
@@ -1121,9 +1121,9 @@ internal struct AnyOperation: VIZEncodable, Decodable, Sendable {
         case .withdraw_vesting: op = try container.decode(Operation.WithdrawVesting.self)
         case .account_create: op = try container.decode(Operation.AccountCreate.self)
         case .account_update: op = try container.decode(Operation.AccountUpdate.self)
-        case .witness_update: op = try container.decode(Operation.WitnessUpdate.self)
-        case .account_witness_vote: op = try container.decode(Operation.AccountWitnessVote.self)
-        case .account_witness_proxy: op = try container.decode(Operation.AccountWitnessProxy.self)
+        case .validator_update: op = try container.decode(Operation.WitnessUpdate.self)
+        case .account_validator_vote: op = try container.decode(Operation.AccountWitnessVote.self)
+        case .account_validator_proxy: op = try container.decode(Operation.AccountWitnessProxy.self)
         // TODO: encode dispatches on Operation.Custom, decode produces Operation.CustomJson — reconcile
         case .custom: op = try container.decode(Operation.CustomJson.self)
         case .request_account_recovery: op = try container.decode(Operation.RequestAccountRecovery.self)
@@ -1137,10 +1137,10 @@ internal struct AnyOperation: VIZEncodable, Decodable, Sendable {
         case .author_reward: op = try container.decode(Operation.AuthorReward.self)
         case .curation_reward: op = try container.decode(Operation.CurationReward.self)
         case .fill_vesting_withdraw: op = try container.decode(Operation.FillVestingWithdraw.self)
-        case .shutdown_witness: op = try container.decode(Operation.ShutdownWitness.self)
+        case .shutdown_validator: op = try container.decode(Operation.ShutdownWitness.self)
         case .hardfork: op = try container.decode(Operation.Hardfork.self)
         case .return_vesting_delegation: op = try container.decode(Operation.ReturnVestingDelegation.self)
-        case .witness_reward: op = try container.decode(Operation.WitnessReward.self)
+        case .validator_reward: op = try container.decode(Operation.WitnessReward.self)
         case .create_invite: op = Operation.Unknown()
         case .claim_invite_balance: op = Operation.Unknown()
         case .invite_registration: op = try container.decode(Operation.InviteRegistration.self)
@@ -1205,13 +1205,13 @@ internal struct AnyOperation: VIZEncodable, Decodable, Sendable {
             try container.encode(OperationId.account_update)
             try container.encode(op)
         case let op as Operation.WitnessUpdate:
-            try container.encode(OperationId.witness_update)
+            try container.encode(OperationId.validator_update)
             try container.encode(op)
         case let op as Operation.AccountWitnessVote:
-            try container.encode(OperationId.account_witness_vote)
+            try container.encode(OperationId.account_validator_vote)
             try container.encode(op)
         case let op as Operation.AccountWitnessProxy:
-            try container.encode(OperationId.account_witness_proxy)
+            try container.encode(OperationId.account_validator_proxy)
             try container.encode(op)
         // TODO: paired with the decode-side TODO above — pick one canonical type for the `custom` op id
         case let op as Operation.Custom:

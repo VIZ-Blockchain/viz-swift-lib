@@ -679,4 +679,50 @@ class OperationTest: XCTestCase {
 
         // ReportOverProduction: skipped — BlockId has no public initializer; covered by encode-dispatch switch's lack of a case.
     }
+
+    func testOperationId_acceptsLegacyAndNewNames() {
+        // Each pair: (legacy op_id string, new op_id string). Both should decode to the same
+        // Swift type (still using the pre-rename type names — those get renamed in later tasks).
+        let cases: [(String, OperationType.Type)] = [
+            ("witness_update",         Operation.WitnessUpdate.self),
+            ("account_witness_vote",   Operation.AccountWitnessVote.self),
+            ("account_witness_proxy",  Operation.AccountWitnessProxy.self),
+            ("shutdown_witness",       Operation.ShutdownWitness.self),
+            ("witness_reward",         Operation.WitnessReward.self),
+        ]
+        let bodies = [
+            "{\"owner\":\"alice\",\"url\":\"\",\"block_signing_key\":\"VIZ1111111111111111111111111111111114T1Anm\",\"props\":{},\"fee\":\"0.000 VIZ\"}",
+            "{\"account\":\"alice\",\"witness\":\"bob\",\"approve\":true}",
+            "{\"account\":\"alice\",\"proxy\":\"bob\"}",
+            "{\"owner\":\"alice\"}",
+            "{\"witness\":\"alice\",\"shares\":\"0.500000 VESTS\"}",
+        ]
+        let newNames = [
+            "validator_update",
+            "account_validator_vote",
+            "account_validator_proxy",
+            "shutdown_validator",
+            "validator_reward",
+        ]
+        for ((legacy, expectedType), body) in zip(cases, bodies) {
+            let wrapped = "[\"\(legacy)\",\(body)]"
+            do {
+                let any = try TestDecode(AnyOperation.self, json: wrapped)
+                XCTAssertTrue(type(of: any.operation) == expectedType,
+                              "Legacy name \(legacy) decoded to \(type(of: any.operation)), expected \(expectedType)")
+            } catch {
+                XCTFail("Legacy decode of \(legacy) failed: \(error)")
+            }
+        }
+        for ((newName, expectedType), body) in zip(zip(newNames, cases.map { $0.1 }), bodies) {
+            let wrapped = "[\"\(newName)\",\(body)]"
+            do {
+                let any = try TestDecode(AnyOperation.self, json: wrapped)
+                XCTAssertTrue(type(of: any.operation) == expectedType,
+                              "New name \(newName) decoded to \(type(of: any.operation)), expected \(expectedType)")
+            } catch {
+                XCTFail("New-name decode of \(newName) failed: \(error)")
+            }
+        }
+    }
 }

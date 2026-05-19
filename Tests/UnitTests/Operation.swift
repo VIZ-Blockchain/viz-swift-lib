@@ -204,19 +204,19 @@ class OperationTest: XCTestCase {
         roundTrip(fx)
     }
 
-    func testRoundTrip_witnessUpdate() {
+    func testRoundTrip_validatorUpdate() {
         let signingKey = PublicKey("VIZ8LMF1uA5GAPfsAe1dieBRATQfhgi1ZqXYRFkaj1WaaWx9vVjau")!
         let fx = OperationFixture(
-            value: Operation.WitnessUpdate(
+            value: Operation.ValidatorUpdate(
                 owner: "alice",
                 url: "https://example.com",
                 blockSigningKey: signingKey,
-                props: Operation.WitnessUpdate.Properties(),
+                props: Operation.ValidatorUpdate.Properties(),
                 fee: Asset(0, .viz)
             ),
             json: "{\"owner\":\"alice\",\"url\":\"https:\\/\\/example.com\",\"block_signing_key\":\"VIZ8LMF1uA5GAPfsAe1dieBRATQfhgi1ZqXYRFkaj1WaaWx9vVjau\",\"props\":{},\"fee\":\"0.000 VIZ\"}",
             binary: Data("05616c6963651368747470733a2f2f6578616d706c652e636f6d03c5ce92a15f7120ae896f348c4ce505d9573cf0816338a478dd9845fe7b1ec59b00000000000000000356495a00000000"),
-            opIdName: "witness_update"
+            opIdName: "validator_update"
         )
         roundTrip(fx)
     }

@@ -213,9 +213,9 @@ public struct Operation {
         }
     }
 
-    /// Registers or updates witnesses.
-    public struct WitnessUpdate: OperationType, Equatable {
-        /// Witness chain properties.
+    /// Registers or updates validators.
+    public struct ValidatorUpdate: OperationType, Equatable {
+        /// Validator chain properties.
         public struct Properties: VIZCodable, Equatable, Sendable {
 //            public var accountCreationFee: Asset
 //            public var maximumBlockSize: UInt32
@@ -1121,7 +1121,7 @@ internal struct AnyOperation: VIZEncodable, Decodable, Sendable {
         case .withdraw_vesting: op = try container.decode(Operation.WithdrawVesting.self)
         case .account_create: op = try container.decode(Operation.AccountCreate.self)
         case .account_update: op = try container.decode(Operation.AccountUpdate.self)
-        case .validator_update: op = try container.decode(Operation.WitnessUpdate.self)
+        case .validator_update: op = try container.decode(Operation.ValidatorUpdate.self)
         case .account_validator_vote: op = try container.decode(Operation.AccountWitnessVote.self)
         case .account_validator_proxy: op = try container.decode(Operation.AccountWitnessProxy.self)
         // TODO: encode dispatches on Operation.Custom, decode produces Operation.CustomJson — reconcile
@@ -1204,7 +1204,7 @@ internal struct AnyOperation: VIZEncodable, Decodable, Sendable {
         case let op as Operation.AccountUpdate:
             try container.encode(OperationId.account_update)
             try container.encode(op)
-        case let op as Operation.WitnessUpdate:
+        case let op as Operation.ValidatorUpdate:
             try container.encode(OperationId.validator_update)
             try container.encode(op)
         case let op as Operation.AccountWitnessVote:
@@ -1294,4 +1294,11 @@ extension Operation.CommentOptions.Extension {
             throw EncodingError.invalidValue(self, EncodingError.Context(codingPath: container.codingPath, debugDescription: "Encountered unknown comment extension"))
         }
     }
+}
+
+// MARK: - Deprecated aliases (witness → validator migration, 2026-05-19)
+
+extension Operation {
+    @available(*, deprecated, renamed: "ValidatorUpdate")
+    public typealias WitnessUpdate = ValidatorUpdate
 }

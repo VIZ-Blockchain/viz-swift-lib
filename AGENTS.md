@@ -23,7 +23,7 @@ swift test --filter IntegrationTests   # only when you know the node is up
 swift test                             # both (may flake on integration)
 ```
 
-Unit suite runs ~108 tests in under a second. If your changes push it over a second, that's worth investigating.
+Unit suite runs ~120 tests in under a second. If your changes push it over a second, that's worth investigating.
 
 ## Conventions
 

@@ -30,7 +30,7 @@ A low-level, unopinionated Swift library for the **VIZ blockchain**.
 
 ## Features
 
-- **Full operation coverage** — transfers, awards, account create/update, witness votes, vesting, escrow, recovery, and more
+- **Full operation coverage** — transfers, awards, account create/update, validator votes, vesting, escrow, recovery, and more
 - **Composable transactions** — combine any number of operations in one signed transaction
 - **Pure-Swift signing** — `secp256k1` ECDSA, key derivation from seed, WIF import/export
 - **Async/await JSON-RPC client** — `actor`-based, `Sendable` types throughout

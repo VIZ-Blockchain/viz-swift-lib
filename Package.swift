@@ -7,7 +7,9 @@ let package = Package(
     name: "VIZ",
     platforms: [
         .iOS(.v13),
-        .macOS(.v10_15)
+        .macOS(.v10_15),
+        .tvOS(.v13),
+        .watchOS(.v6)
     ],
     products: [
         .library(name: "VIZ", targets: ["VIZ"]),

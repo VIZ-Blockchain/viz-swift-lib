@@ -247,10 +247,20 @@ class OperationTest: XCTestCase {
         roundTrip(fx)
     }
 
-    // testRoundTrip_custom is omitted: AnyOperation.encode dispatches on Operation.Custom
-    // but AnyOperation.init(from:) decodes the "custom" op_id as Operation.CustomJson.
-    // The two types are incompatible, so the AnyOperation round-trip step always fails.
-    // Tracked as a Task 6 encode/decode asymmetry.
+    func testRoundTrip_custom() {
+        let fx = OperationFixture(
+            value: Operation.Custom(
+                requiredActiveAuths: ["alice"],
+                requiredRegularAuths: [],
+                id: "test",
+                json: "{}"
+            ),
+            json: "{\"required_active_auths\":[\"alice\"],\"required_regular_auths\":[],\"id\":\"test\",\"json\":\"{}\"}",
+            binary: Data("0105616c696365000474657374027b7d"),
+            opIdName: "custom"
+        )
+        roundTrip(fx)
+    }
 
     // testRoundTrip_deleteContent is omitted: "delete_content" is absent from the
     // string-switch in OperationId.init(from:), so the AnyOperation round-trip
@@ -622,13 +632,7 @@ class OperationTest: XCTestCase {
         // When any of these is fixed (added to the encode switch or paired correctly with an OperationId),
         // the corresponding XCTAssertThrowsError line will fail and force this test to be updated.
 
-        // 1. Operation.CustomJson — decode side produces it for the `custom` op id, but encode dispatches
-        //    on Operation.Custom. So wrapping a CustomJson and encoding throws.
-        XCTAssertThrowsError(try VIZEncoder.encode(AnyOperation(Operation.CustomJson(
-            requiredAuths: [], requiredPostingAuths: ["alice"], id: "test", json: "{}"
-        ))), "CustomJson")
-
-        // 2. Operation.Convert — no OperationId.convert case exists.
+        // 1. Operation.Convert — no OperationId.convert case exists.
         XCTAssertThrowsError(try VIZEncoder.encode(AnyOperation(Operation.Convert(
             owner: "alice", requestid: 1, amount: Asset(1, .viz)
         ))), "Convert")

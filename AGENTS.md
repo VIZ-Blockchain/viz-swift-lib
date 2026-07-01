@@ -48,7 +48,6 @@ Each of these is pinned by a test and marked with a `// TODO:` in source. Don't 
 - `API.Share.init(from:)` returns `0` on parse failure instead of throwing (`Sources/VIZ/API.swift:84`).
 - `ExtendedAccount.currentEnergy` reads `Date()` implicitly (`Sources/VIZ/API.swift:145`).
 - `Operation.Convert` has no `OperationId` case — encode falls through (`Sources/VIZ/Operation.swift:132`).
-- `custom` op id decodes to `Operation.CustomJson` but encode dispatches on `Operation.Custom` — incompatible (`Sources/VIZ/Operation.swift:1127, 1216`).
 - `PublicKey.AddressPrefix.testNet` stringifies to `"VIZ"` like `.mainNet` — intentional (VIZ has no separate testnet prefix).
 
 Find them all with: `grep -n "TODO:" Sources/VIZ/*.swift`.

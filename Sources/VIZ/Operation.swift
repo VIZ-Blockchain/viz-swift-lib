@@ -298,23 +298,44 @@ public struct Operation {
         }
     }
 
-    /// Custom operation.
+    /// Custom operation — carries an arbitrary JSON payload authorized by the
+    /// listed active and/or regular authorities.
+    ///
+    /// Wire layout matches the VIZ `custom_operation`:
+    /// `required_active_auths`, `required_regular_auths`, `id` (string, < 32 chars), `json`.
     public struct Custom: OperationType, Equatable {
-        public var requiredRegularAuths: [String]
         public var requiredActiveAuths: [String]
-        public var id: UInt16
-        public var data: Data
+        public var requiredRegularAuths: [String]
+        public var id: String
+        public var json: JSONString
 
+        public init(
+            requiredActiveAuths: [String],
+            requiredRegularAuths: [String],
+            id: String,
+            json: JSONString
+        ) {
+            self.requiredActiveAuths = requiredActiveAuths
+            self.requiredRegularAuths = requiredRegularAuths
+            self.id = id
+            self.json = json
+        }
+
+        /// Legacy initializer preserving the previous (Steem-shaped) field layout.
+        /// The VIZ `custom` op carries a JSON payload keyed by a string `id`; the old
+        /// `id: UInt16` / `data: Data` shape never validated on-chain. `data` is
+        /// interpreted as UTF-8 JSON.
+        @available(*, deprecated, message: "VIZ `custom` uses id: String and json: JSONString — use init(requiredActiveAuths:requiredRegularAuths:id:json:)")
         public init(
             requiredRegularAuths: [String],
             requiredActiveAuths: [String],
             id: UInt16,
             data: Data
         ) {
-            self.requiredRegularAuths = requiredRegularAuths
             self.requiredActiveAuths = requiredActiveAuths
-            self.id = id
-            self.data = data
+            self.requiredRegularAuths = requiredRegularAuths
+            self.id = String(id)
+            self.json = JSONString(jsonString: String(decoding: data, as: UTF8.self))
         }
     }
 
@@ -347,6 +368,11 @@ public struct Operation {
     }
 
     /// A custom JSON operation.
+    ///
+    /// - Warning: VIZ has no `custom_json` operation; op id 10 (`custom`) carries the
+    ///   JSON payload and maps to ``Operation/Custom``. This type is retained only for
+    ///   source compatibility and does not correspond to any on-chain operation.
+    @available(*, deprecated, message: "VIZ has no custom_json op; use Operation.Custom for the `custom` op id")
     public struct CustomJson: OperationType, Equatable {
         public var requiredAuths: [String]
         public var requiredPostingAuths: [String]
@@ -1186,8 +1212,7 @@ internal struct AnyOperation: VIZEncodable, Decodable, Sendable {
         case .validator_update: op = try container.decode(Operation.ValidatorUpdate.self)
         case .account_validator_vote: op = try container.decode(Operation.AccountValidatorVote.self)
         case .account_validator_proxy: op = try container.decode(Operation.AccountValidatorProxy.self)
-        // TODO: encode dispatches on Operation.Custom, decode produces Operation.CustomJson — reconcile
-        case .custom: op = try container.decode(Operation.CustomJson.self)
+        case .custom: op = try container.decode(Operation.Custom.self)
         case .request_account_recovery: op = try container.decode(Operation.RequestAccountRecovery.self)
         case .recover_account: op = try container.decode(Operation.RecoverAccount.self)
         case .change_recovery_account: op = try container.decode(Operation.ChangeRecoveryAccount.self)
@@ -1275,7 +1300,6 @@ internal struct AnyOperation: VIZEncodable, Decodable, Sendable {
         case let op as Operation.AccountValidatorProxy:
             try container.encode(OperationId.account_validator_proxy)
             try container.encode(op)
-        // TODO: paired with the decode-side TODO above — pick one canonical type for the `custom` op id
         case let op as Operation.Custom:
             try container.encode(OperationId.custom)
             try container.encode(op)

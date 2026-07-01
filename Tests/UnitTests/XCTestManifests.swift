@@ -92,6 +92,7 @@ extension OperationTest {
         ("testRoundTrip_benefactorAward", testRoundTrip_benefactorAward),
         ("testRoundTrip_changeRecoveryAccount", testRoundTrip_changeRecoveryAccount),
         ("testRoundTrip_content", testRoundTrip_content),
+        ("testRoundTrip_custom", testRoundTrip_custom),
         ("testRoundTrip_delegateVestingShares", testRoundTrip_delegateVestingShares),
         ("testRoundTrip_escrowApprove", testRoundTrip_escrowApprove),
         ("testRoundTrip_escrowDispute", testRoundTrip_escrowDispute),

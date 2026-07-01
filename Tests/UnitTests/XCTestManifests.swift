@@ -2,6 +2,7 @@ import XCTest
 
 extension APITest {
     static let __allTests = [
+        ("testCurrentEnergy_atExplicitDate", testCurrentEnergy_atExplicitDate),
         ("testCurrentEnergy_fullRegenerationCapped", testCurrentEnergy_fullRegenerationCapped),
         ("testCurrentEnergy_initialAboveCap", testCurrentEnergy_initialAboveCap),
         ("testCurrentEnergy_negativeEnergy", testCurrentEnergy_negativeEnergy),
@@ -15,6 +16,8 @@ extension APITest {
         ("testEffectiveVestingShares_normalCase", testEffectiveVestingShares_normalCase),
         ("testExtendedAccount_decodesLegacyWitnessKeys", testExtendedAccount_decodesLegacyWitnessKeys),
         ("testExtendedAccount_decodesNewValidatorKeys", testExtendedAccount_decodesNewValidatorKeys),
+        ("testShare_decodesStringValue", testShare_decodesStringValue),
+        ("testShare_throwsOnUnparseableString", testShare_throwsOnUnparseableString),
     ]
 }
 

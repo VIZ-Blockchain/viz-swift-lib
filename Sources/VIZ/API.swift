@@ -129,8 +129,14 @@ public struct API {
             if let intValue = try? container.decode(Int64.self) {
                 self.value = intValue
             } else {
-                // TODO: should throw DecodingError on parse failure instead of returning 0
-                self.value = Int64(try container.decode(String.self)) ?? 0
+                let stringValue = try container.decode(String.self)
+                guard let parsed = Int64(stringValue) else {
+                    throw DecodingError.dataCorruptedError(
+                        in: container,
+                        debugDescription: "Share value \"\(stringValue)\" is not a valid Int64"
+                    )
+                }
+                self.value = parsed
             }
         }
     }
@@ -190,9 +196,11 @@ public struct API {
             - delegatedVestingShares.resolvedAmount
         }
 
-        // TODO: take a Date parameter for testability instead of reading Date() implicitly
-        public var currentEnergy: Int {
-            let deltaTime = Date().timeIntervalSince(lastVoteTime)
+        /// Energy regenerated up to `now`, clamped to the 0…10000 range.
+        /// - Parameter now: The reference time to regenerate against. Pass an explicit
+        ///   value for deterministic results (e.g. in tests); defaults to the current time.
+        public func currentEnergy(at now: Date) -> Int {
+            let deltaTime = now.timeIntervalSince(lastVoteTime)
             var e = Float64(energy) + (deltaTime * 10000 / CHAIN_ENERGY_REGENERATION_SECONDS)
             if e > 10000 {
                 e = 10000
@@ -200,6 +208,11 @@ public struct API {
                 e = 0
             }
             return Int(e)
+        }
+
+        /// Energy regenerated up to the current time. See ``currentEnergy(at:)``.
+        public var currentEnergy: Int {
+            currentEnergy(at: Date())
         }
 
         // Explicit memberwise init so callers (including tests) can construct one

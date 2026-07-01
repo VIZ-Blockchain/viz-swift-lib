@@ -23,7 +23,7 @@ swift test --filter IntegrationTests   # only when you know the node is up
 swift test                             # both (may flake on integration)
 ```
 
-Unit suite runs ~120 tests in under a second. If your changes push it over a second, that's worth investigating.
+Unit suite runs ~124 tests in under a second. If your changes push it over a second, that's worth investigating.
 
 ## Conventions
 
@@ -43,14 +43,10 @@ Unit suite runs ~120 tests in under a second. If your changes push it over a sec
 
 ## Known quirks (do not "fix" silently)
 
-Each of these is pinned by a test and marked with a `// TODO:` in source. Don't change behavior without also updating the pin.
+Each of these is intentional and pinned by a test. Don't change behavior without also updating the pin.
 
-- `API.Share.init(from:)` returns `0` on parse failure instead of throwing (`Sources/VIZ/API.swift:84`).
-- `ExtendedAccount.currentEnergy` reads `Date()` implicitly (`Sources/VIZ/API.swift:145`).
-- `Operation.Convert` has no `OperationId` case — encode falls through (`Sources/VIZ/Operation.swift:132`).
+- `Operation.Convert` (and other Steem-legacy ops) has no `OperationId` case — encoding it throws by design; VIZ has no such operation. Kept only for source/decoding compatibility (`Sources/VIZ/Operation.swift`).
 - `PublicKey.AddressPrefix.testNet` stringifies to `"VIZ"` like `.mainNet` — intentional (VIZ has no separate testnet prefix).
-
-Find them all with: `grep -n "TODO:" Sources/VIZ/*.swift`.
 
 ## Things to avoid
 

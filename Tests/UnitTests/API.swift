@@ -170,6 +170,25 @@ final class APITest: XCTestCase {
         XCTAssertGreaterThanOrEqual(account.currentEnergy, 0)
     }
 
+    func testCurrentEnergy_atExplicitDate() {
+        let base = Date(timeIntervalSince1970: 1_600_000_000)
+        let account = makeAccount(energy: 0, lastVoteTime: base)
+        let halfPeriod = API.CHAIN_ENERGY_REGENERATION_SECONDS / 2
+        // Regenerating from 0 over half a full period yields exactly 5000, deterministically.
+        XCTAssertEqual(account.currentEnergy(at: base.addingTimeInterval(halfPeriod)), 5000)
+    }
+
+    // MARK: - Share
+
+    func testShare_decodesStringValue() throws {
+        let share = try TestDecode(API.Share.self, json: "\"42\"")
+        XCTAssertEqual(share.value, 42)
+    }
+
+    func testShare_throwsOnUnparseableString() {
+        XCTAssertThrowsError(try TestDecode(API.Share.self, json: "\"not-a-number\""))
+    }
+
     // MARK: - DynamicGlobalProperties decode
 
     func testDynamicGlobalProperties_decodesNewKeys() throws {

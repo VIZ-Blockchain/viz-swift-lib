@@ -129,8 +129,11 @@ public struct Operation {
         }
     }
 
-    // TODO: no matching OperationId case — encoding falls through to default and throws
-    /// Convert operation.
+    /// Convert operation (Steem-legacy).
+    ///
+    /// - Note: VIZ has no `convert` operation and no matching `OperationId`, so encoding a
+    ///   `Convert` throws. The type is retained only for source compatibility, like other
+    ///   Steem-legacy operations kept for decoding completeness.
     public struct Convert: OperationType, Equatable {
         public var owner: String
         public var requestid: UInt32

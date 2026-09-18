@@ -19,7 +19,7 @@ let package = Package(
             url: "https://github.com/lukaskubanek/OrderedDictionary.git", 
             from: "4.0.0"
         ),
-        .package(name: "secp256k1gm", url: "https://github.com/greymass/secp256k1.git", .branch("master")),
+        .package(name: "secp256k1gm", url: "https://github.com/greymass/secp256k1.git", .revision("f5babfbb95166ac3bca64b09adefc0dcda0b5c52")),
     ],
     targets: [
         .target(

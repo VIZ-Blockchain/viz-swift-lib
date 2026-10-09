@@ -741,4 +741,483 @@ class OperationTest: XCTestCase {
             }
         }
     }
+
+    // MARK: - HF13/HF14/HF15 operations (vectors shared with viz-python-lib / viz-php-lib; gap ops via viz-js-lib-verified @viz-cx/core)
+
+    func testRoundTrip_setRewardSharing() {
+        let fx = OperationFixture(
+            value: Operation.SetRewardSharing(
+                owner: "alice",
+                sharingRate: 5000
+            ),
+            json: "{\"owner\":\"alice\",\"sharing_rate\":5000}",
+            binary: Data("05616c6963658813"),
+            opIdName: "set_reward_sharing"
+        )
+        roundTrip(fx)
+    }
+
+    func testRoundTrip_fixedAward() {
+        let fx = OperationFixture(
+            value: Operation.FixedAward(
+                initiator: "alice",
+                receiver: "bob",
+                rewardAmount: Asset("1.000 VIZ")!,
+                maxEnergy: 10000,
+                customSequence: 7,
+                memo: "hi",
+                beneficiaries: [Operation.Beneficiary(account: "carol", weight: 1000)]
+            ),
+            json: "{\"initiator\":\"alice\",\"receiver\":\"bob\",\"reward_amount\":\"1.000 VIZ\",\"max_energy\":10000,\"custom_sequence\":7,\"memo\":\"hi\",\"beneficiaries\":[{\"account\":\"carol\",\"weight\":1000}]}",
+            binary: Data("05616c69636503626f62e8030000000000000356495a000000001027070000000000000002686901056361726f6ce803"),
+            opIdName: "fixed_award"
+        )
+        roundTrip(fx)
+    }
+
+    func testRoundTrip_targetAccountSale() {
+        let fx = OperationFixture(
+            value: Operation.TargetAccountSale(
+                account: "alice",
+                accountSeller: "alice",
+                targetBuyer: "bob",
+                accountOfferPrice: Asset("100.000 VIZ")!,
+                accountOnSale: true
+            ),
+            json: "{\"account\":\"alice\",\"account_seller\":\"alice\",\"target_buyer\":\"bob\",\"account_offer_price\":\"100.000 VIZ\",\"account_on_sale\":true}",
+            binary: Data("05616c69636505616c69636503626f62a0860100000000000356495a0000000001"),
+            opIdName: "target_account_sale"
+        )
+        roundTrip(fx)
+    }
+
+    func testRoundTrip_setAgentPermission() {
+        let fx = OperationFixture(
+            value: Operation.SetAgentPermission(
+                account: "alice",
+                agentName: "bot",
+                agentKey: PublicKey("VIZ854Zwsap3RRynKwKYgnsPnoGtL2weiXRjp57Z5ojKCpRJszL2R")!,
+                operations: ["award", "transfer"],
+                expiration: Date(timeIntervalSince1970: 1893456000),
+                addons: []
+            ),
+            json: "{\"account\":\"alice\",\"agent_name\":\"bot\",\"agent_key\":\"VIZ854Zwsap3RRynKwKYgnsPnoGtL2weiXRjp57Z5ojKCpRJszL2R\",\"operations\":[\"award\",\"transfer\"],\"expiration\":\"2030-01-01T00:00:00\",\"addons\":[],\"extensions\":[]}",
+            binary: Data("05616c69636503626f7403a31847754ed837e6f177b587382a1993a91276a08ac26aa0e7673b19ab57b2fc02056177617264087472616e7366657280d8db700000"),
+            opIdName: "set_agent_permission"
+        )
+        roundTrip(fx)
+    }
+
+    func testRoundTrip_pmOracleRegister() {
+        let fx = OperationFixture(
+            value: Operation.PmOracleRegister(
+                owner: "alice",
+                insurance: Asset("5000.000 VIZ")!,
+                feePercent: 250,
+                fixedFee: Asset("1.000 VIZ")!,
+                rulesUrl: "http://r",
+                autoAcceptCreator: "",
+                autoAcceptResolver: "",
+                autoAccept: true
+            ),
+            json: "{\"owner\":\"alice\",\"insurance\":\"5000.000 VIZ\",\"fee_percent\":250,\"fixed_fee\":\"1.000 VIZ\",\"rules_url\":\"http://r\",\"auto_accept_creator\":\"\",\"auto_accept_resolver\":\"\",\"auto_accept\":true,\"extensions\":[]}",
+            binary: Data("05616c696365404b4c00000000000356495a00000000fa00e8030000000000000356495a0000000008687474703a2f2f7200000100"),
+            opIdName: "pm_oracle_register"
+        )
+        roundTrip(fx)
+    }
+
+    func testRoundTrip_pmOracleUpdate() {
+        let fx = OperationFixture(
+            value: Operation.PmOracleUpdate(
+                owner: "alice",
+                insuranceDelta: Asset("100.000 VIZ")!,
+                feePercent: nil,
+                fixedFee: Asset("2.000 VIZ")!,
+                rulesUrl: nil,
+                autoAcceptCreator: nil,
+                autoAcceptResolver: nil,
+                autoAccept: false
+            ),
+            json: "{\"owner\":\"alice\",\"insurance_delta\":\"100.000 VIZ\",\"fee_percent\":null,\"fixed_fee\":\"2.000 VIZ\",\"rules_url\":null,\"auto_accept_creator\":null,\"auto_accept_resolver\":null,\"auto_accept\":false,\"extensions\":[]}",
+            binary: Data("05616c69636501a0860100000000000356495a000000000001d0070000000000000356495a00000000000000010000"),
+            opIdName: "pm_oracle_update"
+        )
+        roundTrip(fx)
+    }
+
+    func testRoundTrip_pmCreateMarket() {
+        let fx = OperationFixture(
+            value: Operation.PmCreateMarket(
+                creator: "cre",
+                oracle: "ora",
+                marketType: 1,
+                outcomes: ["Yes", "No", "Maybe"],
+                url: "http://u",
+                oracleFeePercent: 300,
+                oracleFixedFee: Asset("1.000 VIZ")!,
+                creatorFeePercent: 100,
+                liquidityFeePercent: 50,
+                liquidity: Asset("1000.000 VIZ")!,
+                lmsrB: 722,
+                bettingExpiration: Date(timeIntervalSince1970: 1893456000),
+                resultExpiration: Date(timeIntervalSince1970: 1893542400),
+                timePenaltyType: 1,
+                timePenaltyValue: 86400,
+                penaltyCurveType: 0,
+                allowEarlyResolution: true,
+                allowCancellation: false,
+                allowBatch: false,
+                allowInstantBet: true,
+                endogeneityTier: 2,
+                disputeMode: 1,
+                disputeResolver: "res",
+                disputePenaltyPercent: -500,
+                metadata: "{\"tags\":[\"x\"]}"
+            ),
+            json: "{\"creator\":\"cre\",\"oracle\":\"ora\",\"market_type\":1,\"outcomes\":[\"Yes\",\"No\",\"Maybe\"],\"url\":\"http://u\",\"oracle_fee_percent\":300,\"oracle_fixed_fee\":\"1.000 VIZ\",\"creator_fee_percent\":100,\"liquidity_fee_percent\":50,\"liquidity\":\"1000.000 VIZ\",\"lmsr_b\":722,\"betting_expiration\":\"2030-01-01T00:00:00\",\"result_expiration\":\"2030-01-02T00:00:00\",\"time_penalty_type\":1,\"time_penalty_value\":86400,\"penalty_curve_type\":0,\"allow_early_resolution\":true,\"allow_cancellation\":false,\"allow_batch\":false,\"allow_instant_bet\":true,\"endogeneity_tier\":2,\"dispute_mode\":1,\"dispute_resolver\":\"res\",\"dispute_penalty_percent\":-500,\"metadata\":\"{\\\"tags\\\":[\\\"x\\\"]}\",\"extensions\":[]}",
+            binary: Data("03637265036f7261010303596573024e6f054d6179626508687474703a2f2f752c01e8030000000000000356495a000000006400320040420f00000000000356495a00000000d20200000000000080d8db70002add70018051010000010000010201037265730cfe0e7b2274616773223a5b2278225d7d00"),
+            opIdName: "pm_create_market"
+        )
+        roundTrip(fx)
+    }
+
+    func testRoundTrip_pmOracleAcceptMarket() {
+        let fx = OperationFixture(
+            value: Operation.PmOracleAcceptMarket(
+                oracle: "ora",
+                marketId: 42,
+                accept: true,
+                oracleFeePercent: 200,
+                oracleFixedFee: Asset("0.500 VIZ")!
+            ),
+            json: "{\"oracle\":\"ora\",\"market_id\":42,\"accept\":true,\"oracle_fee_percent\":200,\"oracle_fixed_fee\":\"0.500 VIZ\",\"extensions\":[]}",
+            binary: Data("036f72612a0000000000000001c800f4010000000000000356495a0000000000"),
+            opIdName: "pm_oracle_accept_market"
+        )
+        roundTrip(fx)
+    }
+
+    func testRoundTrip_pmPlaceBet() {
+        let fx = OperationFixture(
+            value: Operation.PmPlaceBet(
+                account: "alice",
+                marketId: 42,
+                side: 1,
+                outcomeIndex: -1,
+                amount: Asset("1.500 VIZ")!,
+                minTokens: 0,
+                mode: 0
+            ),
+            json: "{\"account\":\"alice\",\"market_id\":42,\"side\":1,\"outcome_index\":-1,\"amount\":\"1.500 VIZ\",\"min_tokens\":0,\"mode\":0,\"extensions\":[]}",
+            binary: Data("05616c6963652a0000000000000001ffffdc050000000000000356495a0000000000000000000000000000"),
+            opIdName: "pm_place_bet"
+        )
+        roundTrip(fx)
+    }
+
+    func testRoundTrip_pmCommitBet() {
+        let fx = OperationFixture(
+            value: Operation.PmCommitBet(
+                account: "alice",
+                marketId: 42,
+                commitment: Data("abababababababababababababababababababababababababababababababab"),
+                escrowAmount: Asset("10.000 VIZ")!,
+                noRevealFeePercent: 2000
+            ),
+            json: "{\"account\":\"alice\",\"market_id\":42,\"commitment\":\"abababababababababababababababababababababababababababababababab\",\"escrow_amount\":\"10.000 VIZ\",\"no_reveal_fee_percent\":2000,\"extensions\":[]}",
+            binary: Data("05616c6963652a00000000000000abababababababababababababababababababababababababababababababab10270000000000000356495a00000000d00700"),
+            opIdName: "pm_commit_bet"
+        )
+        roundTrip(fx)
+    }
+
+    func testRoundTrip_pmRevealBet() {
+        let fx = OperationFixture(
+            value: Operation.PmRevealBet(
+                account: "alice",
+                commitId: 9,
+                side: 0,
+                outcomeIndex: -1,
+                amount: Asset("5.000 VIZ")!,
+                salt: "saltsalt",
+                minTokens: 0
+            ),
+            json: "{\"account\":\"alice\",\"commit_id\":9,\"side\":0,\"outcome_index\":-1,\"amount\":\"5.000 VIZ\",\"salt\":\"saltsalt\",\"min_tokens\":0,\"extensions\":[]}",
+            binary: Data("05616c696365090000000000000000ffff88130000000000000356495a000000000873616c7473616c74000000000000000000"),
+            opIdName: "pm_reveal_bet"
+        )
+        roundTrip(fx)
+    }
+
+    func testRoundTrip_pmCancelBet() {
+        let fx = OperationFixture(
+            value: Operation.PmCancelBet(
+                account: "alice",
+                betId: 9,
+                minReturn: 100
+            ),
+            json: "{\"account\":\"alice\",\"bet_id\":9,\"min_return\":100,\"extensions\":[]}",
+            binary: Data("05616c6963650900000000000000640000000000000000"),
+            opIdName: "pm_cancel_bet"
+        )
+        roundTrip(fx)
+    }
+
+    func testRoundTrip_pmAddLiquidity() {
+        let fx = OperationFixture(
+            value: Operation.PmAddLiquidity(
+                provider: "lp",
+                marketId: 42,
+                amount: Asset("500.000 VIZ")!
+            ),
+            json: "{\"provider\":\"lp\",\"market_id\":42,\"amount\":\"500.000 VIZ\",\"extensions\":[]}",
+            binary: Data("026c702a0000000000000020a10700000000000356495a0000000000"),
+            opIdName: "pm_add_liquidity"
+        )
+        roundTrip(fx)
+    }
+
+    func testRoundTrip_pmWithdrawLiquidity() {
+        let fx = OperationFixture(
+            value: Operation.PmWithdrawLiquidity(
+                provider: "lp",
+                liquidityId: 3,
+                amount: Asset("0.000 VIZ")!
+            ),
+            json: "{\"provider\":\"lp\",\"liquidity_id\":3,\"amount\":\"0.000 VIZ\",\"extensions\":[]}",
+            binary: Data("026c70030000000000000000000000000000000356495a0000000000"),
+            opIdName: "pm_withdraw_liquidity"
+        )
+        roundTrip(fx)
+    }
+
+    func testRoundTrip_pmResolveMarket() {
+        let fx = OperationFixture(
+            value: Operation.PmResolveMarket(
+                oracle: "ora",
+                marketId: 42,
+                winningOutcome: 1,
+                decisionUrl: "http://d",
+                decisionReason: "because"
+            ),
+            json: "{\"oracle\":\"ora\",\"market_id\":42,\"winning_outcome\":1,\"decision_url\":\"http://d\",\"decision_reason\":\"because\",\"extensions\":[]}",
+            binary: Data("036f72612a00000000000000010008687474703a2f2f64076265636175736500"),
+            opIdName: "pm_resolve_market"
+        )
+        roundTrip(fx)
+    }
+
+    func testRoundTrip_pmNoContest() {
+        let fx = OperationFixture(
+            value: Operation.PmNoContest(
+                oracle: "ora",
+                marketId: 42,
+                reason: "void"
+            ),
+            json: "{\"oracle\":\"ora\",\"market_id\":42,\"reason\":\"void\",\"extensions\":[]}",
+            binary: Data("036f72612a0000000000000004766f696400"),
+            opIdName: "pm_no_contest"
+        )
+        roundTrip(fx)
+    }
+
+    func testRoundTrip_pmDisputeCreate() {
+        let fx = OperationFixture(
+            value: Operation.PmDisputeCreate(
+                disputer: "bob",
+                marketId: 7,
+                proposedOutcome: 1,
+                reason: "wrong"
+            ),
+            json: "{\"disputer\":\"bob\",\"market_id\":7,\"proposed_outcome\":1,\"reason\":\"wrong\",\"extensions\":[]}",
+            binary: Data("03626f62070000000000000001000577726f6e6700"),
+            opIdName: "pm_dispute_create"
+        )
+        roundTrip(fx)
+    }
+
+    func testRoundTrip_pmDisputeVote() {
+        let fx = OperationFixture(
+            value: Operation.PmDisputeVote(
+                voter: "carol",
+                marketId: 7,
+                voteOutcome: 0,
+                votePercent: 5000
+            ),
+            json: "{\"voter\":\"carol\",\"market_id\":7,\"vote_outcome\":0,\"vote_percent\":5000,\"extensions\":[]}",
+            binary: Data("056361726f6c07000000000000000000881300"),
+            opIdName: "pm_dispute_vote"
+        )
+        roundTrip(fx)
+    }
+
+    func testRoundTrip_pmDisputeResolve() {
+        let fx = OperationFixture(
+            value: Operation.PmDisputeResolve(
+                resolver: "res",
+                marketId: 7,
+                correctOutcome: 1,
+                penaltyAmount: Asset("50.000 VIZ")!,
+                banOracle: true,
+                banOracleUntil: Date(timeIntervalSince1970: 1798761600),
+                banCreator: false,
+                banCreatorUntil: Date(timeIntervalSince1970: 0)
+            ),
+            json: "{\"resolver\":\"res\",\"market_id\":7,\"correct_outcome\":1,\"penalty_amount\":\"50.000 VIZ\",\"ban_oracle\":true,\"ban_oracle_until\":\"2027-01-01T00:00:00\",\"ban_creator\":false,\"ban_creator_until\":\"1970-01-01T00:00:00\",\"extensions\":[]}",
+            binary: Data("037265730700000000000000010050c30000000000000356495a000000000180ec366b000000000000"),
+            opIdName: "pm_dispute_resolve"
+        )
+        roundTrip(fx)
+    }
+
+    func testRoundTrip_pmTransferPosition() {
+        let fx = OperationFixture(
+            value: Operation.PmTransferPosition(
+                from: "alice",
+                betId: 9,
+                to: "bob",
+                amount: 1000,
+                memo: "hi"
+            ),
+            json: "{\"from\":\"alice\",\"bet_id\":9,\"to\":\"bob\",\"amount\":1000,\"memo\":\"hi\",\"extensions\":[]}",
+            binary: Data("05616c696365090000000000000003626f62e80300000000000002686900"),
+            opIdName: "pm_transfer_position"
+        )
+        roundTrip(fx)
+    }
+
+    func testRoundTrip_pmLazyDeposit() {
+        let fx = OperationFixture(
+            value: Operation.PmLazyDeposit(
+                account: "alice",
+                amount: Asset("200.000 VIZ")!
+            ),
+            json: "{\"account\":\"alice\",\"amount\":\"200.000 VIZ\",\"extensions\":[]}",
+            binary: Data("05616c696365400d0300000000000356495a0000000000"),
+            opIdName: "pm_lazy_deposit"
+        )
+        roundTrip(fx)
+    }
+
+    func testRoundTrip_pmLazyWithdraw() {
+        let fx = OperationFixture(
+            value: Operation.PmLazyWithdraw(
+                account: "alice",
+                shares: 500,
+                emergency: true
+            ),
+            json: "{\"account\":\"alice\",\"shares\":500,\"emergency\":true,\"extensions\":[]}",
+            binary: Data("05616c696365f4010000000000000100"),
+            opIdName: "pm_lazy_withdraw"
+        )
+        roundTrip(fx)
+    }
+
+    func testRoundTrip_pmLeverageOpen() {
+        let fx = OperationFixture(
+            value: Operation.PmLeverageOpen(
+                account: "alice",
+                marketId: 42,
+                outcomeIndex: 0,
+                collateral: Asset("10.000 VIZ")!,
+                loan: Asset("40.000 VIZ")!,
+                minTokens: 0,
+                maxSlippagePercent: 1000
+            ),
+            json: "{\"account\":\"alice\",\"market_id\":42,\"outcome_index\":0,\"collateral\":\"10.000 VIZ\",\"loan\":\"40.000 VIZ\",\"min_tokens\":0,\"max_slippage_percent\":1000,\"extensions\":[]}",
+            binary: Data("05616c6963652a00000000000000000010270000000000000356495a00000000409c0000000000000356495a000000000000000000000000e80300"),
+            opIdName: "pm_leverage_open"
+        )
+        roundTrip(fx)
+    }
+
+    func testRoundTrip_pmLeverageClose() {
+        let fx = OperationFixture(
+            value: Operation.PmLeverageClose(
+                account: "alice",
+                positionId: 5,
+                minReturn: 100
+            ),
+            json: "{\"account\":\"alice\",\"position_id\":5,\"min_return\":100,\"extensions\":[]}",
+            binary: Data("05616c6963650500000000000000640000000000000000"),
+            opIdName: "pm_leverage_close"
+        )
+        roundTrip(fx)
+    }
+
+    func testRoundTrip_pmLeverageConvert() {
+        let fx = OperationFixture(
+            value: Operation.PmLeverageConvert(
+                account: "alice",
+                positionId: 5,
+                conversionProfitCost: 300
+            ),
+            json: "{\"account\":\"alice\",\"position_id\":5,\"conversion_profit_cost\":300,\"extensions\":[]}",
+            binary: Data("05616c69636505000000000000002c0100"),
+            opIdName: "pm_leverage_convert"
+        )
+        roundTrip(fx)
+    }
+
+    func testRoundTrip_pmDisputeOracleRespond() {
+        let fx = OperationFixture(
+            value: Operation.PmDisputeOracleRespond(
+                oracle: "ora",
+                marketId: 7,
+                response: "rebuttal"
+            ),
+            json: "{\"oracle\":\"ora\",\"market_id\":7,\"response\":\"rebuttal\",\"extensions\":[]}",
+            binary: Data("036f7261070000000000000008726562757474616c00"),
+            opIdName: "pm_dispute_oracle_respond"
+        )
+        roundTrip(fx)
+    }
+
+    func testRoundTrip_pmUnban() {
+        let fx = OperationFixture(
+            value: Operation.PmUnban(
+                resolver: "res",
+                target: "ora",
+                unbanOracle: true,
+                unbanCreator: false
+            ),
+            json: "{\"resolver\":\"res\",\"target\":\"ora\",\"unban_oracle\":true,\"unban_creator\":false,\"extensions\":[]}",
+            binary: Data("03726573036f7261010000"),
+            opIdName: "pm_unban"
+        )
+        roundTrip(fx)
+    }
+
+    func testVirtualDecode_stakeholderReward() {
+        assertVirtualDecodes(
+            opIdName: "stakeholder_reward",
+            json: "{\"validator\":\"v\",\"stakeholder\":\"s\",\"shares\":\"1.000000 SHARES\"}",
+            Operation.StakeholderReward(validator: "v", stakeholder: "s", shares: Asset("1.000000 SHARES")!)
+        )
+    }
+
+    func testVirtualDecode_pmPayout() {
+        assertVirtualDecodes(
+            opIdName: "pm_payout",
+            json: "{\"account\":\"alice\",\"market_id\":42,\"bet_id\":9,\"side\":1,\"outcome_index\":-1,\"amount\":\"1.500 VIZ\",\"payout\":\"2.000 VIZ\"}",
+            Operation.PmPayout(account: "alice", marketId: 42, betId: 9, side: 1, outcomeIndex: -1, amount: Asset("1.500 VIZ")!, payout: Asset("2.000 VIZ")!)
+        )
+    }
+
+    func testVirtualDecode_pmLeverageResolve() {
+        assertVirtualDecodes(
+            opIdName: "pm_leverage_resolve",
+            json: "{\"account\":\"alice\",\"position_id\":5,\"market_id\":42,\"won\":true,\"pool_received\":\"1.000 VIZ\",\"bettor_received\":\"3.000 VIZ\",\"outcome_index\":0,\"leverage\":500}",
+            Operation.PmLeverageResolve(account: "alice", positionId: 5, marketId: 42, won: true, poolReceived: Asset("1.000 VIZ")!, bettorReceived: Asset("3.000 VIZ")!, outcomeIndex: 0, leverage: 500)
+        )
+    }
+
+    func testVirtualDecode_pmLpPayout() {
+        assertVirtualDecodes(
+            opIdName: "pm_lp_payout",
+            json: "{\"account\":\"lp\",\"market_id\":42,\"principal\":\"500.000 VIZ\",\"income\":\"5.000 VIZ\",\"charge\":\"0.100 VIZ\"}",
+            Operation.PmLpPayout(account: "lp", marketId: 42, principal: Asset("500.000 VIZ")!, income: Asset("5.000 VIZ")!, charge: Asset("0.100 VIZ")!)
+        )
+    }
 }

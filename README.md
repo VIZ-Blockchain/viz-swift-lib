@@ -208,6 +208,20 @@ let delegate = VIZ.Operation.DelegateVestingShares(
 )
 ```
 
+### Place a prediction-market bet (HF14)
+
+```swift
+let bet = VIZ.Operation.PmPlaceBet(
+    account: "alice",
+    marketId: 42,
+    side: 1,                       // 1 = YES, 0 = NO, -1 = none (multi-outcome markets)
+    outcomeIndex: -1,              // outcome index for multi-outcome markets, -1 for binary
+    amount: VIZ.Asset(1.5, .viz)
+)
+```
+
+Every HF14 prediction-market operation (`PmOracleRegister`, `PmCreateMarket`, `PmResolveMarket`, `PmDisputeCreate`, `PmLeverageOpen`, …) is available under `VIZ.Operation`; virtual ones (`PmPayout`, `PmLpPayout`, …) decode from account history.
+
 ### Read account history
 
 ```swift

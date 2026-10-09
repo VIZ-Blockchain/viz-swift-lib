@@ -41,6 +41,8 @@ extension Request {
             return "network_broadcast_api"
         case "get_ops_in_block", "get_transaction":
             return "operation_history"
+        case "get_account_commits", "get_account_leverage_positions", "get_account_positions", "get_category_tag_counts", "get_creator_ban", "get_deferred_claims", "get_dispute", "get_dispute_votes", "get_lazy_allocations", "get_lazy_deposit", "get_lazy_pool", "get_lazy_withdraw_requests", "get_leverage_close_preview", "get_leverage_convert_preview", "get_leverage_quote", "get_market", "get_market_bets", "get_market_categories", "get_market_full", "get_market_kline", "get_market_lazy_allocation", "get_market_leverage_positions", "get_market_liquidity", "get_market_meta", "get_market_outcomes", "get_market_weight_sums", "get_oracle", "get_pm_chain_properties", "list_markets", "list_markets_awaiting_resolution", "list_markets_by_category", "list_markets_by_creator", "list_markets_by_event", "list_markets_by_oracle", "list_markets_by_oracle_status", "list_markets_in_dispute_window", "list_oracle_disputes", "list_oracles":
+            return "prediction_market_api"
         case "get_active_paid_subscriptions", "get_inactive_paid_subscriptions", "get_paid_subscription_options", "get_paid_subscription_status", "get_paid_subscriptions":
             return "paid_subscription_api"
         case "get_active_witnesses", "get_active_validators",

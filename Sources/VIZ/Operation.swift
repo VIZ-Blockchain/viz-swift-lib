@@ -1056,6 +1056,945 @@ public struct Operation {
         }
     }
 
+
+    // MARK: HF13
+
+    /// `fixed_award` (op 60).
+    public struct FixedAward: OperationType, Equatable {
+        public var initiator: String
+        public var receiver: String
+        public var rewardAmount: Asset
+        public var maxEnergy: UInt16
+        public var customSequence: UInt64
+        public var memo: String
+        public var beneficiaries: [Beneficiary]
+
+        public init(
+            initiator: String,
+            receiver: String,
+            rewardAmount: Asset,
+            maxEnergy: UInt16,
+            customSequence: UInt64 = 0,
+            memo: String = "",
+            beneficiaries: [Beneficiary] = []
+        ) {
+            self.initiator = initiator
+            self.receiver = receiver
+            self.rewardAmount = rewardAmount
+            self.maxEnergy = maxEnergy
+            self.customSequence = customSequence
+            self.memo = memo
+            self.beneficiaries = beneficiaries
+        }
+    }
+
+    /// `target_account_sale` (op 61).
+    public struct TargetAccountSale: OperationType, Equatable {
+        public var account: String
+        public var accountSeller: String
+        public var targetBuyer: String
+        public var accountOfferPrice: Asset
+        public var accountOnSale: Bool
+
+        public init(
+            account: String,
+            accountSeller: String,
+            targetBuyer: String,
+            accountOfferPrice: Asset,
+            accountOnSale: Bool
+        ) {
+            self.account = account
+            self.accountSeller = accountSeller
+            self.targetBuyer = targetBuyer
+            self.accountOfferPrice = accountOfferPrice
+            self.accountOnSale = accountOnSale
+        }
+    }
+
+
+    // MARK: HF13 (virtual)
+
+    /// `bid` (op 62).
+    public struct Bid: OperationType, Equatable {
+        public var isVirtual: Bool { return true }
+        public let account: String
+        public let bidder: String
+        public let bid: Asset
+    }
+
+    /// `outbid` (op 63).
+    public struct Outbid: OperationType, Equatable {
+        public var isVirtual: Bool { return true }
+        public let account: String
+        public let bidder: String
+        public let bid: Asset
+    }
+
+    /// `set_reward_sharing` (op 64).
+    public struct SetRewardSharing: OperationType, Equatable {
+        public var owner: String
+        public var sharingRate: UInt16
+
+        public init(
+            owner: String,
+            sharingRate: UInt16
+        ) {
+            self.owner = owner
+            self.sharingRate = sharingRate
+        }
+    }
+
+    /// `stakeholder_reward` (op 65).
+    public struct StakeholderReward: OperationType, Equatable {
+        public var isVirtual: Bool { return true }
+        public let validator: String
+        public let stakeholder: String
+        public let shares: Asset
+    }
+
+
+    // MARK: HF14 prediction markets (Onix)
+
+    /// `pm_oracle_register` (op 66).
+    public struct PmOracleRegister: OperationType, Equatable {
+        public var owner: String
+        public var insurance: Asset
+        public var feePercent: UInt16
+        public var fixedFee: Asset
+        public var rulesUrl: String
+        public var autoAcceptCreator: String
+        public var autoAcceptResolver: String
+        public var autoAccept: Bool
+        public var extensions: [FutureExtensions]
+
+        public init(
+            owner: String,
+            insurance: Asset,
+            feePercent: UInt16,
+            fixedFee: Asset,
+            rulesUrl: String,
+            autoAcceptCreator: String,
+            autoAcceptResolver: String,
+            autoAccept: Bool,
+            extensions: [FutureExtensions] = []
+        ) {
+            self.owner = owner
+            self.insurance = insurance
+            self.feePercent = feePercent
+            self.fixedFee = fixedFee
+            self.rulesUrl = rulesUrl
+            self.autoAcceptCreator = autoAcceptCreator
+            self.autoAcceptResolver = autoAcceptResolver
+            self.autoAccept = autoAccept
+            self.extensions = extensions
+        }
+    }
+
+    /// `pm_oracle_update` (op 67).
+    public struct PmOracleUpdate: OperationType, Equatable {
+        public var owner: String
+        public var insuranceDelta: Asset?
+        public var feePercent: UInt16?
+        public var fixedFee: Asset?
+        public var rulesUrl: String?
+        public var autoAcceptCreator: String?
+        public var autoAcceptResolver: String?
+        public var autoAccept: Bool?
+        public var extensions: [FutureExtensions]
+
+        public init(
+            owner: String,
+            insuranceDelta: Asset? = nil,
+            feePercent: UInt16? = nil,
+            fixedFee: Asset? = nil,
+            rulesUrl: String? = nil,
+            autoAcceptCreator: String? = nil,
+            autoAcceptResolver: String? = nil,
+            autoAccept: Bool? = nil,
+            extensions: [FutureExtensions] = []
+        ) {
+            self.owner = owner
+            self.insuranceDelta = insuranceDelta
+            self.feePercent = feePercent
+            self.fixedFee = fixedFee
+            self.rulesUrl = rulesUrl
+            self.autoAcceptCreator = autoAcceptCreator
+            self.autoAcceptResolver = autoAcceptResolver
+            self.autoAccept = autoAccept
+            self.extensions = extensions
+        }
+
+        // Synthesized Codable uses encodeIfPresent, which drops the optional flag byte;
+        // write the fields explicitly so `nil` → 0x00 and `value` → 0x01 + value.
+        public func binaryEncode(to encoder: VIZEncoder) throws {
+            try encoder.encode(owner)
+            try encoder.encode(insuranceDelta)
+            try encoder.encode(feePercent)
+            try encoder.encode(fixedFee)
+            try encoder.encode(rulesUrl)
+            try encoder.encode(autoAcceptCreator)
+            try encoder.encode(autoAcceptResolver)
+            try encoder.encode(autoAccept)
+            try encoder.encode(extensions)
+        }
+    }
+
+    /// `pm_create_market` (op 68).
+    public struct PmCreateMarket: OperationType, Equatable {
+        public var creator: String
+        public var oracle: String
+        public var marketType: UInt8
+        public var outcomes: [String]  // order preserved on the wire
+        public var url: String
+        public var oracleFeePercent: UInt16
+        public var oracleFixedFee: Asset
+        public var creatorFeePercent: UInt16
+        public var liquidityFeePercent: UInt16
+        public var liquidity: Asset
+        public var lmsrB: Int64
+        public var bettingExpiration: Date
+        public var resultExpiration: Date
+        public var timePenaltyType: UInt8
+        public var timePenaltyValue: UInt32
+        public var penaltyCurveType: UInt8
+        public var allowEarlyResolution: Bool
+        public var allowCancellation: Bool
+        public var allowBatch: Bool
+        public var allowInstantBet: Bool
+        public var endogeneityTier: UInt8
+        public var disputeMode: UInt8
+        public var disputeResolver: String
+        public var disputePenaltyPercent: Int16
+        public var metadata: String
+        public var extensions: [FutureExtensions]
+
+        public init(
+            creator: String,
+            oracle: String,
+            marketType: UInt8,
+            outcomes: [String],
+            url: String,
+            oracleFeePercent: UInt16,
+            oracleFixedFee: Asset,
+            creatorFeePercent: UInt16,
+            liquidityFeePercent: UInt16,
+            liquidity: Asset,
+            lmsrB: Int64,
+            bettingExpiration: Date,
+            resultExpiration: Date,
+            timePenaltyType: UInt8,
+            timePenaltyValue: UInt32,
+            penaltyCurveType: UInt8,
+            allowEarlyResolution: Bool,
+            allowCancellation: Bool,
+            allowBatch: Bool,
+            allowInstantBet: Bool = true,
+            endogeneityTier: UInt8 = 2,
+            disputeMode: UInt8,
+            disputeResolver: String,
+            disputePenaltyPercent: Int16,
+            metadata: String,
+            extensions: [FutureExtensions] = []
+        ) {
+            self.creator = creator
+            self.oracle = oracle
+            self.marketType = marketType
+            self.outcomes = outcomes
+            self.url = url
+            self.oracleFeePercent = oracleFeePercent
+            self.oracleFixedFee = oracleFixedFee
+            self.creatorFeePercent = creatorFeePercent
+            self.liquidityFeePercent = liquidityFeePercent
+            self.liquidity = liquidity
+            self.lmsrB = lmsrB
+            self.bettingExpiration = bettingExpiration
+            self.resultExpiration = resultExpiration
+            self.timePenaltyType = timePenaltyType
+            self.timePenaltyValue = timePenaltyValue
+            self.penaltyCurveType = penaltyCurveType
+            self.allowEarlyResolution = allowEarlyResolution
+            self.allowCancellation = allowCancellation
+            self.allowBatch = allowBatch
+            self.allowInstantBet = allowInstantBet
+            self.endogeneityTier = endogeneityTier
+            self.disputeMode = disputeMode
+            self.disputeResolver = disputeResolver
+            self.disputePenaltyPercent = disputePenaltyPercent
+            self.metadata = metadata
+            self.extensions = extensions
+        }
+    }
+
+    /// `pm_oracle_accept_market` (op 69).
+    public struct PmOracleAcceptMarket: OperationType, Equatable {
+        public var oracle: String
+        public var marketId: Int64
+        public var accept: Bool
+        public var oracleFeePercent: UInt16
+        public var oracleFixedFee: Asset
+        public var extensions: [FutureExtensions]
+
+        public init(
+            oracle: String,
+            marketId: Int64,
+            accept: Bool,
+            oracleFeePercent: UInt16,
+            oracleFixedFee: Asset,
+            extensions: [FutureExtensions] = []
+        ) {
+            self.oracle = oracle
+            self.marketId = marketId
+            self.accept = accept
+            self.oracleFeePercent = oracleFeePercent
+            self.oracleFixedFee = oracleFixedFee
+            self.extensions = extensions
+        }
+    }
+
+    /// `pm_place_bet` (op 70).
+    public struct PmPlaceBet: OperationType, Equatable {
+        public var account: String
+        public var marketId: Int64
+        public var side: Int8
+        public var outcomeIndex: Int16
+        public var amount: Asset
+        public var minTokens: Int64
+        public var mode: UInt8
+        public var extensions: [FutureExtensions]
+
+        public init(
+            account: String,
+            marketId: Int64,
+            side: Int8 = -1,
+            outcomeIndex: Int16 = -1,
+            amount: Asset,
+            minTokens: Int64 = 0,
+            mode: UInt8 = 0,
+            extensions: [FutureExtensions] = []
+        ) {
+            self.account = account
+            self.marketId = marketId
+            self.side = side
+            self.outcomeIndex = outcomeIndex
+            self.amount = amount
+            self.minTokens = minTokens
+            self.mode = mode
+            self.extensions = extensions
+        }
+    }
+
+    /// `pm_commit_bet` (op 71).
+    public struct PmCommitBet: OperationType, Equatable {
+        public var account: String
+        public var marketId: Int64
+        public var commitment: Data  // sha256, 32 bytes
+        public var escrowAmount: Asset
+        public var noRevealFeePercent: UInt16
+        public var extensions: [FutureExtensions]
+
+        public init(
+            account: String,
+            marketId: Int64,
+            commitment: Data,
+            escrowAmount: Asset,
+            noRevealFeePercent: UInt16,
+            extensions: [FutureExtensions] = []
+        ) {
+            self.account = account
+            self.marketId = marketId
+            self.commitment = commitment
+            self.escrowAmount = escrowAmount
+            self.noRevealFeePercent = noRevealFeePercent
+            self.extensions = extensions
+        }
+    }
+
+    /// `pm_reveal_bet` (op 72).
+    public struct PmRevealBet: OperationType, Equatable {
+        public var account: String
+        public var commitId: Int64
+        public var side: Int8
+        public var outcomeIndex: Int16
+        public var amount: Asset
+        public var salt: String
+        public var minTokens: Int64
+        public var extensions: [FutureExtensions]
+
+        public init(
+            account: String,
+            commitId: Int64,
+            side: Int8 = -1,
+            outcomeIndex: Int16 = -1,
+            amount: Asset,
+            salt: String,
+            minTokens: Int64 = 0,
+            extensions: [FutureExtensions] = []
+        ) {
+            self.account = account
+            self.commitId = commitId
+            self.side = side
+            self.outcomeIndex = outcomeIndex
+            self.amount = amount
+            self.salt = salt
+            self.minTokens = minTokens
+            self.extensions = extensions
+        }
+    }
+
+    /// `pm_cancel_bet` (op 73).
+    public struct PmCancelBet: OperationType, Equatable {
+        public var account: String
+        public var betId: Int64
+        public var minReturn: Int64
+        public var extensions: [FutureExtensions]
+
+        public init(
+            account: String,
+            betId: Int64,
+            minReturn: Int64,
+            extensions: [FutureExtensions] = []
+        ) {
+            self.account = account
+            self.betId = betId
+            self.minReturn = minReturn
+            self.extensions = extensions
+        }
+    }
+
+    /// `pm_add_liquidity` (op 74).
+    public struct PmAddLiquidity: OperationType, Equatable {
+        public var provider: String
+        public var marketId: Int64
+        public var amount: Asset
+        public var extensions: [FutureExtensions]
+
+        public init(
+            provider: String,
+            marketId: Int64,
+            amount: Asset,
+            extensions: [FutureExtensions] = []
+        ) {
+            self.provider = provider
+            self.marketId = marketId
+            self.amount = amount
+            self.extensions = extensions
+        }
+    }
+
+    /// `pm_withdraw_liquidity` (op 75).
+    public struct PmWithdrawLiquidity: OperationType, Equatable {
+        public var provider: String
+        public var liquidityId: Int64
+        public var amount: Asset
+        public var extensions: [FutureExtensions]
+
+        public init(
+            provider: String,
+            liquidityId: Int64,
+            amount: Asset,
+            extensions: [FutureExtensions] = []
+        ) {
+            self.provider = provider
+            self.liquidityId = liquidityId
+            self.amount = amount
+            self.extensions = extensions
+        }
+    }
+
+    /// `pm_resolve_market` (op 76).
+    public struct PmResolveMarket: OperationType, Equatable {
+        public var oracle: String
+        public var marketId: Int64
+        public var winningOutcome: Int16
+        public var decisionUrl: String
+        public var decisionReason: String
+        public var extensions: [FutureExtensions]
+
+        public init(
+            oracle: String,
+            marketId: Int64,
+            winningOutcome: Int16,
+            decisionUrl: String,
+            decisionReason: String,
+            extensions: [FutureExtensions] = []
+        ) {
+            self.oracle = oracle
+            self.marketId = marketId
+            self.winningOutcome = winningOutcome
+            self.decisionUrl = decisionUrl
+            self.decisionReason = decisionReason
+            self.extensions = extensions
+        }
+    }
+
+    /// `pm_no_contest` (op 77).
+    public struct PmNoContest: OperationType, Equatable {
+        public var oracle: String
+        public var marketId: Int64
+        public var reason: String
+        public var extensions: [FutureExtensions]
+
+        public init(
+            oracle: String,
+            marketId: Int64,
+            reason: String,
+            extensions: [FutureExtensions] = []
+        ) {
+            self.oracle = oracle
+            self.marketId = marketId
+            self.reason = reason
+            self.extensions = extensions
+        }
+    }
+
+    /// `pm_dispute_create` (op 78).
+    public struct PmDisputeCreate: OperationType, Equatable {
+        public var disputer: String
+        public var marketId: Int64
+        public var proposedOutcome: Int16
+        public var reason: String
+        public var extensions: [FutureExtensions]
+
+        public init(
+            disputer: String,
+            marketId: Int64,
+            proposedOutcome: Int16,
+            reason: String,
+            extensions: [FutureExtensions] = []
+        ) {
+            self.disputer = disputer
+            self.marketId = marketId
+            self.proposedOutcome = proposedOutcome
+            self.reason = reason
+            self.extensions = extensions
+        }
+    }
+
+    /// `pm_dispute_vote` (op 79).
+    public struct PmDisputeVote: OperationType, Equatable {
+        public var voter: String
+        public var marketId: Int64
+        public var voteOutcome: Int16
+        public var votePercent: Int16
+        public var extensions: [FutureExtensions]
+
+        public init(
+            voter: String,
+            marketId: Int64,
+            voteOutcome: Int16,
+            votePercent: Int16,
+            extensions: [FutureExtensions] = []
+        ) {
+            self.voter = voter
+            self.marketId = marketId
+            self.voteOutcome = voteOutcome
+            self.votePercent = votePercent
+            self.extensions = extensions
+        }
+    }
+
+    /// `pm_dispute_resolve` (op 80).
+    public struct PmDisputeResolve: OperationType, Equatable {
+        public var resolver: String
+        public var marketId: Int64
+        public var correctOutcome: Int16
+        public var penaltyAmount: Asset
+        public var banOracle: Bool
+        public var banOracleUntil: Date
+        public var banCreator: Bool
+        public var banCreatorUntil: Date
+        public var extensions: [FutureExtensions]
+
+        public init(
+            resolver: String,
+            marketId: Int64,
+            correctOutcome: Int16,
+            penaltyAmount: Asset,
+            banOracle: Bool,
+            banOracleUntil: Date,
+            banCreator: Bool,
+            banCreatorUntil: Date,
+            extensions: [FutureExtensions] = []
+        ) {
+            self.resolver = resolver
+            self.marketId = marketId
+            self.correctOutcome = correctOutcome
+            self.penaltyAmount = penaltyAmount
+            self.banOracle = banOracle
+            self.banOracleUntil = banOracleUntil
+            self.banCreator = banCreator
+            self.banCreatorUntil = banCreatorUntil
+            self.extensions = extensions
+        }
+    }
+
+    /// `pm_transfer_position` (op 81).
+    public struct PmTransferPosition: OperationType, Equatable {
+        public var from: String
+        public var betId: Int64
+        public var to: String
+        public var amount: Int64  // share weight (int64), not an Asset
+        public var memo: String
+        public var extensions: [FutureExtensions]
+
+        public init(
+            from: String,
+            betId: Int64,
+            to: String,
+            amount: Int64,
+            memo: String = "",
+            extensions: [FutureExtensions] = []
+        ) {
+            self.from = from
+            self.betId = betId
+            self.to = to
+            self.amount = amount
+            self.memo = memo
+            self.extensions = extensions
+        }
+    }
+
+    /// `pm_lazy_deposit` (op 82).
+    public struct PmLazyDeposit: OperationType, Equatable {
+        public var account: String
+        public var amount: Asset
+        public var extensions: [FutureExtensions]
+
+        public init(
+            account: String,
+            amount: Asset,
+            extensions: [FutureExtensions] = []
+        ) {
+            self.account = account
+            self.amount = amount
+            self.extensions = extensions
+        }
+    }
+
+    /// `pm_lazy_withdraw` (op 83).
+    public struct PmLazyWithdraw: OperationType, Equatable {
+        public var account: String
+        public var shares: Int64
+        public var emergency: Bool
+        public var extensions: [FutureExtensions]
+
+        public init(
+            account: String,
+            shares: Int64,
+            emergency: Bool,
+            extensions: [FutureExtensions] = []
+        ) {
+            self.account = account
+            self.shares = shares
+            self.emergency = emergency
+            self.extensions = extensions
+        }
+    }
+
+
+    // MARK: HF14 prediction-market virtual operations (decode-only)
+
+    /// `pm_batch_settle` (op 84).
+    public struct PmBatchSettle: OperationType, Equatable {
+        public var isVirtual: Bool { return true }
+        public let marketId: Int64
+        public let epoch: UInt32
+        public let settledBets: UInt32
+    }
+
+    /// `pm_commit_forfeit` (op 85).
+    public struct PmCommitForfeit: OperationType, Equatable {
+        public var isVirtual: Bool { return true }
+        public let account: String
+        public let commitId: Int64
+        public let marketId: Int64
+        public let penalty: Asset
+        public let refund: Asset
+    }
+
+    /// `pm_auto_payout` (op 86).
+    public struct PmAutoPayout: OperationType, Equatable {
+        public var isVirtual: Bool { return true }
+        public let account: String
+        public let marketId: Int64
+        public let betId: Int64
+        public let payout: Asset
+    }
+
+    /// `pm_dispute_finalize` (op 87).
+    public struct PmDisputeFinalize: OperationType, Equatable {
+        public var isVirtual: Bool { return true }
+        public let oracle: String
+        public let marketId: Int64
+        public let winningOutcome: Int16
+        public let oraclePenalty: Asset
+    }
+
+    /// `pm_dispute_auto_close` (op 88).
+    public struct PmDisputeAutoClose: OperationType, Equatable {
+        public var isVirtual: Bool { return true }
+        public let oracle: String
+        public let marketId: Int64
+        public let oraclePenalty: Asset
+    }
+
+    /// `pm_oracle_missed_penalty` (op 89).
+    public struct PmOracleMissedPenalty: OperationType, Equatable {
+        public var isVirtual: Bool { return true }
+        public let oracle: String
+        public let marketId: Int64
+        public let slashed: Asset
+    }
+
+    /// `pm_lazy_recall` (op 90).
+    public struct PmLazyRecall: OperationType, Equatable {
+        public var isVirtual: Bool { return true }
+        public let marketId: Int64
+        public let recalled: Asset
+    }
+
+    /// `pm_leverage_open` (op 91).
+    public struct PmLeverageOpen: OperationType, Equatable {
+        public var account: String
+        public var marketId: Int64
+        public var outcomeIndex: Int16
+        public var collateral: Asset
+        public var loan: Asset
+        public var minTokens: Int64
+        public var maxSlippagePercent: UInt16
+        public var extensions: [FutureExtensions]
+
+        public init(
+            account: String,
+            marketId: Int64,
+            outcomeIndex: Int16 = -1,
+            collateral: Asset,
+            loan: Asset,
+            minTokens: Int64 = 0,
+            maxSlippagePercent: UInt16,
+            extensions: [FutureExtensions] = []
+        ) {
+            self.account = account
+            self.marketId = marketId
+            self.outcomeIndex = outcomeIndex
+            self.collateral = collateral
+            self.loan = loan
+            self.minTokens = minTokens
+            self.maxSlippagePercent = maxSlippagePercent
+            self.extensions = extensions
+        }
+    }
+
+    /// `pm_leverage_close` (op 92).
+    public struct PmLeverageClose: OperationType, Equatable {
+        public var account: String
+        public var positionId: Int64
+        public var minReturn: Int64
+        public var extensions: [FutureExtensions]
+
+        public init(
+            account: String,
+            positionId: Int64,
+            minReturn: Int64,
+            extensions: [FutureExtensions] = []
+        ) {
+            self.account = account
+            self.positionId = positionId
+            self.minReturn = minReturn
+            self.extensions = extensions
+        }
+    }
+
+    /// `pm_leverage_convert` (op 93).
+    public struct PmLeverageConvert: OperationType, Equatable {
+        public var account: String
+        public var positionId: Int64
+        public var conversionProfitCost: UInt16
+        public var extensions: [FutureExtensions]
+
+        public init(
+            account: String,
+            positionId: Int64,
+            conversionProfitCost: UInt16,
+            extensions: [FutureExtensions] = []
+        ) {
+            self.account = account
+            self.positionId = positionId
+            self.conversionProfitCost = conversionProfitCost
+            self.extensions = extensions
+        }
+    }
+
+    /// `pm_leverage_liquidate` (op 94).
+    public struct PmLeverageLiquidate: OperationType, Equatable {
+        public var isVirtual: Bool { return true }
+        public let account: String
+        public let positionId: Int64
+        public let marketId: Int64
+        public let cancelValue: Asset
+        public let poolReceived: Asset
+        public let bettorReceived: Asset
+        public let reason: UInt8
+    }
+
+    /// `pm_leverage_resolve` (op 95).
+    public struct PmLeverageResolve: OperationType, Equatable {
+        public var isVirtual: Bool { return true }
+        public let account: String
+        public let positionId: Int64
+        public let marketId: Int64
+        public let won: Bool
+        public let poolReceived: Asset
+        public let bettorReceived: Asset
+        public let outcomeIndex: Int16
+        public let leverage: UInt16
+    }
+
+    /// `pm_market_accepted` (op 96).
+    public struct PmMarketAccepted: OperationType, Equatable {
+        public var isVirtual: Bool { return true }
+        public let oracle: String
+        public let creator: String
+        public let marketId: Int64
+        public let oracleFeePercent: UInt16
+        public let oracleFixedFee: Asset
+        public let selfOracle: Bool
+    }
+
+    /// `pm_payout` (op 97).
+    public struct PmPayout: OperationType, Equatable {
+        public var isVirtual: Bool { return true }
+        public let account: String
+        public let marketId: Int64
+        public let betId: Int64
+        public let side: Int8
+        public let outcomeIndex: Int16
+        public let amount: Asset
+        public let payout: Asset
+    }
+
+    /// `pm_dispute_oracle_respond` (op 98).
+    public struct PmDisputeOracleRespond: OperationType, Equatable {
+        public var oracle: String
+        public var marketId: Int64
+        public var response: String
+        public var extensions: [FutureExtensions]
+
+        public init(
+            oracle: String,
+            marketId: Int64,
+            response: String,
+            extensions: [FutureExtensions] = []
+        ) {
+            self.oracle = oracle
+            self.marketId = marketId
+            self.response = response
+            self.extensions = extensions
+        }
+    }
+
+    /// `pm_unban` (op 99).
+    public struct PmUnban: OperationType, Equatable {
+        public var resolver: String
+        public var target: String
+        public var unbanOracle: Bool
+        public var unbanCreator: Bool
+        public var extensions: [FutureExtensions]
+
+        public init(
+            resolver: String,
+            target: String,
+            unbanOracle: Bool,
+            unbanCreator: Bool,
+            extensions: [FutureExtensions] = []
+        ) {
+            self.resolver = resolver
+            self.target = target
+            self.unbanOracle = unbanOracle
+            self.unbanCreator = unbanCreator
+            self.extensions = extensions
+        }
+    }
+
+    /// `pm_ban_expired` (op 100).
+    public struct PmBanExpired: OperationType, Equatable {
+        public var isVirtual: Bool { return true }
+        public let account: String
+        public let oracle: Bool
+        public let creator: Bool
+    }
+
+    /// `pm_market_expired` (op 101).
+    public struct PmMarketExpired: OperationType, Equatable {
+        public var isVirtual: Bool { return true }
+        public let oracle: String
+        public let creator: String
+        public let marketId: Int64
+        public let refundedLiquidity: Asset
+    }
+
+    /// `pm_dispute_opened` (op 102).
+    public struct PmDisputeOpened: OperationType, Equatable {
+        public var isVirtual: Bool { return true }
+        public let oracle: String
+        public let disputer: String
+        public let marketId: Int64
+        public let proposedOutcome: Int16
+    }
+
+    /// `pm_early_exit_claim_paid` (op 103).
+    public struct PmEarlyExitClaimPaid: OperationType, Equatable {
+        public var isVirtual: Bool { return true }
+        public let account: String
+        public let marketId: Int64
+        public let kind: UInt8
+        public let outcomeIndex: UInt8
+        public let claimed: Asset
+        public let paid: Asset
+    }
+
+    /// `pm_lp_payout` (op 104).
+    public struct PmLpPayout: OperationType, Equatable {
+        public var isVirtual: Bool { return true }
+        public let account: String
+        public let marketId: Int64
+        public let principal: Asset
+        public let income: Asset
+        public let charge: Asset
+    }
+
+
+    // MARK: HF15
+
+    /// `set_agent_permission` (op 105).
+    public struct SetAgentPermission: OperationType, Equatable {
+        public var account: String
+        public var agentName: String
+        public var agentKey: PublicKey
+        public var operations: [String]  // flat_set: pass sorted
+        public var expiration: Date
+        public var addons: [String]  // flat_set: pass sorted
+        public var extensions: [FutureExtensions]
+
+        public init(
+            account: String,
+            agentName: String,
+            agentKey: PublicKey,
+            operations: [String],
+            expiration: Date,
+            addons: [String] = [],
+            extensions: [FutureExtensions] = []
+        ) {
+            self.account = account
+            self.agentName = agentName
+            self.agentKey = agentKey
+            self.operations = operations
+            self.expiration = expiration
+            self.addons = addons
+            self.extensions = extensions
+        }
+    }
+
     /// Unknown operation, seen if the decoder encounters operation which has no type defined.
     /// - Note: Not encodable, the encoder will throw if encountering this operation.
     public struct Unknown: OperationType, Equatable {}
@@ -1125,6 +2064,52 @@ fileprivate enum OperationId: UInt8, VIZEncodable, Decodable {
     case account_sale = 57
     case use_invite_balance = 58
     case expire_escrow_ratification = 59
+    case fixed_award = 60
+    case target_account_sale = 61
+    case bid = 62
+    case outbid = 63
+    case set_reward_sharing = 64
+    case stakeholder_reward = 65
+    case pm_oracle_register = 66
+    case pm_oracle_update = 67
+    case pm_create_market = 68
+    case pm_oracle_accept_market = 69
+    case pm_place_bet = 70
+    case pm_commit_bet = 71
+    case pm_reveal_bet = 72
+    case pm_cancel_bet = 73
+    case pm_add_liquidity = 74
+    case pm_withdraw_liquidity = 75
+    case pm_resolve_market = 76
+    case pm_no_contest = 77
+    case pm_dispute_create = 78
+    case pm_dispute_vote = 79
+    case pm_dispute_resolve = 80
+    case pm_transfer_position = 81
+    case pm_lazy_deposit = 82
+    case pm_lazy_withdraw = 83
+    case pm_batch_settle = 84
+    case pm_commit_forfeit = 85
+    case pm_auto_payout = 86
+    case pm_dispute_finalize = 87
+    case pm_dispute_auto_close = 88
+    case pm_oracle_missed_penalty = 89
+    case pm_lazy_recall = 90
+    case pm_leverage_open = 91
+    case pm_leverage_close = 92
+    case pm_leverage_convert = 93
+    case pm_leverage_liquidate = 94
+    case pm_leverage_resolve = 95
+    case pm_market_accepted = 96
+    case pm_payout = 97
+    case pm_dispute_oracle_respond = 98
+    case pm_unban = 99
+    case pm_ban_expired = 100
+    case pm_market_expired = 101
+    case pm_dispute_opened = 102
+    case pm_early_exit_claim_paid = 103
+    case pm_lp_payout = 104
+    case set_agent_permission = 105
     case unknown = 255
 
     init(from decoder: Decoder) throws {
@@ -1173,6 +2158,52 @@ fileprivate enum OperationId: UInt8, VIZEncodable, Decodable {
         case "set_subaccount_price": self = .set_subaccount_price
         case "buy_account": self = .buy_account
         case "account_sale": self = .account_sale //Virtual Operation
+        case "fixed_award": self = .fixed_award
+        case "target_account_sale": self = .target_account_sale
+        case "bid": self = .bid
+        case "outbid": self = .outbid
+        case "set_reward_sharing": self = .set_reward_sharing
+        case "stakeholder_reward": self = .stakeholder_reward
+        case "pm_oracle_register": self = .pm_oracle_register
+        case "pm_oracle_update": self = .pm_oracle_update
+        case "pm_create_market": self = .pm_create_market
+        case "pm_oracle_accept_market": self = .pm_oracle_accept_market
+        case "pm_place_bet": self = .pm_place_bet
+        case "pm_commit_bet": self = .pm_commit_bet
+        case "pm_reveal_bet": self = .pm_reveal_bet
+        case "pm_cancel_bet": self = .pm_cancel_bet
+        case "pm_add_liquidity": self = .pm_add_liquidity
+        case "pm_withdraw_liquidity": self = .pm_withdraw_liquidity
+        case "pm_resolve_market": self = .pm_resolve_market
+        case "pm_no_contest": self = .pm_no_contest
+        case "pm_dispute_create": self = .pm_dispute_create
+        case "pm_dispute_vote": self = .pm_dispute_vote
+        case "pm_dispute_resolve": self = .pm_dispute_resolve
+        case "pm_transfer_position": self = .pm_transfer_position
+        case "pm_lazy_deposit": self = .pm_lazy_deposit
+        case "pm_lazy_withdraw": self = .pm_lazy_withdraw
+        case "pm_batch_settle": self = .pm_batch_settle
+        case "pm_commit_forfeit": self = .pm_commit_forfeit
+        case "pm_auto_payout": self = .pm_auto_payout
+        case "pm_dispute_finalize": self = .pm_dispute_finalize
+        case "pm_dispute_auto_close": self = .pm_dispute_auto_close
+        case "pm_oracle_missed_penalty": self = .pm_oracle_missed_penalty
+        case "pm_lazy_recall": self = .pm_lazy_recall
+        case "pm_leverage_open": self = .pm_leverage_open
+        case "pm_leverage_close": self = .pm_leverage_close
+        case "pm_leverage_convert": self = .pm_leverage_convert
+        case "pm_leverage_liquidate": self = .pm_leverage_liquidate
+        case "pm_leverage_resolve": self = .pm_leverage_resolve
+        case "pm_market_accepted": self = .pm_market_accepted
+        case "pm_payout": self = .pm_payout
+        case "pm_dispute_oracle_respond": self = .pm_dispute_oracle_respond
+        case "pm_unban": self = .pm_unban
+        case "pm_ban_expired": self = .pm_ban_expired
+        case "pm_market_expired": self = .pm_market_expired
+        case "pm_dispute_opened": self = .pm_dispute_opened
+        case "pm_early_exit_claim_paid": self = .pm_early_exit_claim_paid
+        case "pm_lp_payout": self = .pm_lp_payout
+        case "set_agent_permission": self = .set_agent_permission
         default: self = .unknown
         }
     }
@@ -1265,6 +2296,52 @@ internal struct AnyOperation: VIZEncodable, Decodable, Sendable {
         case .committee_pay_request: op = Operation.Unknown()
         case .use_invite_balance: op = Operation.Unknown()
         case .expire_escrow_ratification: op = Operation.Unknown()
+        case .fixed_award: op = try container.decode(Operation.FixedAward.self)
+        case .target_account_sale: op = try container.decode(Operation.TargetAccountSale.self)
+        case .bid: op = try container.decode(Operation.Bid.self)
+        case .outbid: op = try container.decode(Operation.Outbid.self)
+        case .set_reward_sharing: op = try container.decode(Operation.SetRewardSharing.self)
+        case .stakeholder_reward: op = try container.decode(Operation.StakeholderReward.self)
+        case .pm_oracle_register: op = try container.decode(Operation.PmOracleRegister.self)
+        case .pm_oracle_update: op = try container.decode(Operation.PmOracleUpdate.self)
+        case .pm_create_market: op = try container.decode(Operation.PmCreateMarket.self)
+        case .pm_oracle_accept_market: op = try container.decode(Operation.PmOracleAcceptMarket.self)
+        case .pm_place_bet: op = try container.decode(Operation.PmPlaceBet.self)
+        case .pm_commit_bet: op = try container.decode(Operation.PmCommitBet.self)
+        case .pm_reveal_bet: op = try container.decode(Operation.PmRevealBet.self)
+        case .pm_cancel_bet: op = try container.decode(Operation.PmCancelBet.self)
+        case .pm_add_liquidity: op = try container.decode(Operation.PmAddLiquidity.self)
+        case .pm_withdraw_liquidity: op = try container.decode(Operation.PmWithdrawLiquidity.self)
+        case .pm_resolve_market: op = try container.decode(Operation.PmResolveMarket.self)
+        case .pm_no_contest: op = try container.decode(Operation.PmNoContest.self)
+        case .pm_dispute_create: op = try container.decode(Operation.PmDisputeCreate.self)
+        case .pm_dispute_vote: op = try container.decode(Operation.PmDisputeVote.self)
+        case .pm_dispute_resolve: op = try container.decode(Operation.PmDisputeResolve.self)
+        case .pm_transfer_position: op = try container.decode(Operation.PmTransferPosition.self)
+        case .pm_lazy_deposit: op = try container.decode(Operation.PmLazyDeposit.self)
+        case .pm_lazy_withdraw: op = try container.decode(Operation.PmLazyWithdraw.self)
+        case .pm_batch_settle: op = try container.decode(Operation.PmBatchSettle.self)
+        case .pm_commit_forfeit: op = try container.decode(Operation.PmCommitForfeit.self)
+        case .pm_auto_payout: op = try container.decode(Operation.PmAutoPayout.self)
+        case .pm_dispute_finalize: op = try container.decode(Operation.PmDisputeFinalize.self)
+        case .pm_dispute_auto_close: op = try container.decode(Operation.PmDisputeAutoClose.self)
+        case .pm_oracle_missed_penalty: op = try container.decode(Operation.PmOracleMissedPenalty.self)
+        case .pm_lazy_recall: op = try container.decode(Operation.PmLazyRecall.self)
+        case .pm_leverage_open: op = try container.decode(Operation.PmLeverageOpen.self)
+        case .pm_leverage_close: op = try container.decode(Operation.PmLeverageClose.self)
+        case .pm_leverage_convert: op = try container.decode(Operation.PmLeverageConvert.self)
+        case .pm_leverage_liquidate: op = try container.decode(Operation.PmLeverageLiquidate.self)
+        case .pm_leverage_resolve: op = try container.decode(Operation.PmLeverageResolve.self)
+        case .pm_market_accepted: op = try container.decode(Operation.PmMarketAccepted.self)
+        case .pm_payout: op = try container.decode(Operation.PmPayout.self)
+        case .pm_dispute_oracle_respond: op = try container.decode(Operation.PmDisputeOracleRespond.self)
+        case .pm_unban: op = try container.decode(Operation.PmUnban.self)
+        case .pm_ban_expired: op = try container.decode(Operation.PmBanExpired.self)
+        case .pm_market_expired: op = try container.decode(Operation.PmMarketExpired.self)
+        case .pm_dispute_opened: op = try container.decode(Operation.PmDisputeOpened.self)
+        case .pm_early_exit_claim_paid: op = try container.decode(Operation.PmEarlyExitClaimPaid.self)
+        case .pm_lp_payout: op = try container.decode(Operation.PmLpPayout.self)
+        case .set_agent_permission: op = try container.decode(Operation.SetAgentPermission.self)
         case .unknown: op = Operation.Unknown()
         }
         self.operation = op
@@ -1347,6 +2424,87 @@ internal struct AnyOperation: VIZEncodable, Decodable, Sendable {
             try container.encode(op)
         case let op as Operation.InviteRegistration:
             try container.encode(OperationId.invite_registration)
+            try container.encode(op)
+        case let op as Operation.FixedAward:
+            try container.encode(OperationId.fixed_award)
+            try container.encode(op)
+        case let op as Operation.TargetAccountSale:
+            try container.encode(OperationId.target_account_sale)
+            try container.encode(op)
+        case let op as Operation.SetRewardSharing:
+            try container.encode(OperationId.set_reward_sharing)
+            try container.encode(op)
+        case let op as Operation.PmOracleRegister:
+            try container.encode(OperationId.pm_oracle_register)
+            try container.encode(op)
+        case let op as Operation.PmOracleUpdate:
+            try container.encode(OperationId.pm_oracle_update)
+            try container.encode(op)
+        case let op as Operation.PmCreateMarket:
+            try container.encode(OperationId.pm_create_market)
+            try container.encode(op)
+        case let op as Operation.PmOracleAcceptMarket:
+            try container.encode(OperationId.pm_oracle_accept_market)
+            try container.encode(op)
+        case let op as Operation.PmPlaceBet:
+            try container.encode(OperationId.pm_place_bet)
+            try container.encode(op)
+        case let op as Operation.PmCommitBet:
+            try container.encode(OperationId.pm_commit_bet)
+            try container.encode(op)
+        case let op as Operation.PmRevealBet:
+            try container.encode(OperationId.pm_reveal_bet)
+            try container.encode(op)
+        case let op as Operation.PmCancelBet:
+            try container.encode(OperationId.pm_cancel_bet)
+            try container.encode(op)
+        case let op as Operation.PmAddLiquidity:
+            try container.encode(OperationId.pm_add_liquidity)
+            try container.encode(op)
+        case let op as Operation.PmWithdrawLiquidity:
+            try container.encode(OperationId.pm_withdraw_liquidity)
+            try container.encode(op)
+        case let op as Operation.PmResolveMarket:
+            try container.encode(OperationId.pm_resolve_market)
+            try container.encode(op)
+        case let op as Operation.PmNoContest:
+            try container.encode(OperationId.pm_no_contest)
+            try container.encode(op)
+        case let op as Operation.PmDisputeCreate:
+            try container.encode(OperationId.pm_dispute_create)
+            try container.encode(op)
+        case let op as Operation.PmDisputeVote:
+            try container.encode(OperationId.pm_dispute_vote)
+            try container.encode(op)
+        case let op as Operation.PmDisputeResolve:
+            try container.encode(OperationId.pm_dispute_resolve)
+            try container.encode(op)
+        case let op as Operation.PmTransferPosition:
+            try container.encode(OperationId.pm_transfer_position)
+            try container.encode(op)
+        case let op as Operation.PmLazyDeposit:
+            try container.encode(OperationId.pm_lazy_deposit)
+            try container.encode(op)
+        case let op as Operation.PmLazyWithdraw:
+            try container.encode(OperationId.pm_lazy_withdraw)
+            try container.encode(op)
+        case let op as Operation.PmLeverageOpen:
+            try container.encode(OperationId.pm_leverage_open)
+            try container.encode(op)
+        case let op as Operation.PmLeverageClose:
+            try container.encode(OperationId.pm_leverage_close)
+            try container.encode(op)
+        case let op as Operation.PmLeverageConvert:
+            try container.encode(OperationId.pm_leverage_convert)
+            try container.encode(op)
+        case let op as Operation.PmDisputeOracleRespond:
+            try container.encode(OperationId.pm_dispute_oracle_respond)
+            try container.encode(op)
+        case let op as Operation.PmUnban:
+            try container.encode(OperationId.pm_unban)
+            try container.encode(op)
+        case let op as Operation.SetAgentPermission:
+            try container.encode(OperationId.set_agent_permission)
             try container.encode(op)
         default:
             throw EncodingError.invalidValue(self.operation, EncodingError.Context(

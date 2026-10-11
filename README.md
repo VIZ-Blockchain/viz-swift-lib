@@ -51,7 +51,7 @@ In `Package.swift`:
 dependencies: [
     .package(
         url: "https://github.com/viz-blockchain/viz-swift-lib.git",
-        .upToNextMinor(from: "0.1.0")
+        .upToNextMinor(from: "0.2.0")
     )
 ]
 ```
@@ -207,6 +207,20 @@ let delegate = VIZ.Operation.DelegateVestingShares(
     vestingShares: VIZ.Asset(1000.0, .vests)
 )
 ```
+
+### Place a prediction-market bet (HF14)
+
+```swift
+let bet = VIZ.Operation.PmPlaceBet(
+    account: "alice",
+    marketId: 42,
+    side: 1,                       // 1 = YES, 0 = NO, -1 = none (multi-outcome markets)
+    outcomeIndex: -1,              // outcome index for multi-outcome markets, -1 for binary
+    amount: VIZ.Asset(1.5, .viz)
+)
+```
+
+Every HF14 prediction-market operation (`PmOracleRegister`, `PmCreateMarket`, `PmResolveMarket`, `PmDisputeCreate`, `PmLeverageOpen`, …) is available under `VIZ.Operation`; virtual ones (`PmPayout`, `PmLpPayout`, …) decode from account history.
 
 ### Read account history
 

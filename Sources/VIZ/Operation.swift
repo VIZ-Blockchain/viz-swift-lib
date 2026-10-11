@@ -1767,7 +1767,7 @@ public struct Operation {
         public init(
             account: String,
             marketId: Int64,
-            outcomeIndex: Int16 = -1,
+            outcomeIndex: Int16 = 0,
             collateral: Asset,
             loan: Asset,
             minTokens: Int64 = 0,

@@ -51,7 +51,7 @@ In `Package.swift`:
 dependencies: [
     .package(
         url: "https://github.com/viz-blockchain/viz-swift-lib.git",
-        .upToNextMinor(from: "0.1.0")
+        .upToNextMinor(from: "0.2.0")
     )
 ]
 ```

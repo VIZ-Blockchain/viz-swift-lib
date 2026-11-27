@@ -35,6 +35,11 @@ public struct API {
         public let maxVirtualBandwidth: String
         public let currentReserveRatio: UInt64
         public let voteRegenerationPerDay: UInt32
+        /// HF16 round anchor: round(t) = roundAnchorRound + (t - roundAnchorTime) / block interval. Nil on pre-HF16 nodes.
+        public let roundAnchorTime: Date?
+        public let roundAnchorRound: UInt32?
+        /// HF17: scheduled slots in force when the current emergency episode began. Nil on pre-HF17 nodes.
+        public let emergencyScheduleSizeOnEntry: UInt32?
 
         // CodingKey raw values must be camelCase because the decoder applies
         // .convertFromSnakeCase before matching. Legacy keys carry the pre-rename
@@ -49,7 +54,8 @@ public struct API {
                  inflationValidatorPercent,
                  inflationRatio, averageBlockSize, maximumBlockSize, currentAslot,
                  recentSlotsFilled, participationCount, lastIrreversibleBlockNum,
-                 maxVirtualBandwidth, currentReserveRatio, voteRegenerationPerDay
+                 maxVirtualBandwidth, currentReserveRatio, voteRegenerationPerDay,
+                 roundAnchorTime, roundAnchorRound, emergencyScheduleSizeOnEntry
             case legacyCurrentWitness          = "currentWitness"
             case legacyInflationWitnessPercent = "inflationWitnessPercent"
         }
@@ -78,6 +84,9 @@ public struct API {
             self.maxVirtualBandwidth = try c.decode(String.self, forKey: .maxVirtualBandwidth)
             self.currentReserveRatio = try c.decode(UInt64.self, forKey: .currentReserveRatio)
             self.voteRegenerationPerDay = try c.decode(UInt32.self, forKey: .voteRegenerationPerDay)
+            self.roundAnchorTime = try c.decodeIfPresent(Date.self, forKey: .roundAnchorTime)
+            self.roundAnchorRound = try c.decodeIfPresent(UInt32.self, forKey: .roundAnchorRound)
+            self.emergencyScheduleSizeOnEntry = try c.decodeIfPresent(UInt32.self, forKey: .emergencyScheduleSizeOnEntry)
             self.currentValidator = try (try? c.decode(String.self, forKey: .currentValidator))
                 ?? c.decode(String.self, forKey: .legacyCurrentWitness)
             self.inflationValidatorPercent = try (try? c.decode(Int16.self, forKey: .inflationValidatorPercent))

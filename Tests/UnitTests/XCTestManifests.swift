@@ -48,6 +48,7 @@ extension BlockTest {
     static let __allTests = [
         ("testCodable", testCodable),
         ("testDecode_signedBlock_acceptsNewValidatorKeys", testDecode_signedBlock_acceptsNewValidatorKeys),
+        ("testBlockExtensions_hf16hf18", testBlockExtensions_hf16hf18),
     ]
 }
 
@@ -158,6 +159,7 @@ extension OperationTest {
         ("testVirtualDecode_pmPayout", testVirtualDecode_pmPayout),
         ("testVirtualDecode_pmLeverageResolve", testVirtualDecode_pmLeverageResolve),
         ("testVirtualDecode_pmLpPayout", testVirtualDecode_pmLpPayout),
+        ("testVirtualDecode_validatorEquivocation", testVirtualDecode_validatorEquivocation),
     ]
 }
 

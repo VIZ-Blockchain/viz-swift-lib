@@ -36,6 +36,85 @@ public enum BlockExtension: Equatable, Sendable {
     case version(String)
     /// Witness hardfork vote.
     case hardforkVersionVote(String, Date)
+    /// HF16: quorum certificate of the parent block.
+    case quorumCertificate(BlockQuorumCertificate)
+    /// HF16: timeout certificate of the skipped round.
+    case timeoutCertificate(BlockTimeoutCertificate)
+    /// HF16: proof that a validator voted for two blocks in one round.
+    case equivocationProof(BlockEquivocationProof)
+    /// HF18: timeout certificate whose votes name the certified block.
+    case timeoutCertificateV2(BlockTimeoutCertificateV2)
+}
+
+/// One `[validator, value]` pair of a node `flat_map<account_name_type, T>`.
+public struct ValidatorEntry<Value: Codable & Equatable & Sendable>: Codable, Equatable, Sendable {
+    public let validator: String
+    public let value: Value
+
+    public init(validator: String, value: Value) {
+        self.validator = validator
+        self.value = value
+    }
+
+    public init(from decoder: Decoder) throws {
+        var container = try decoder.unkeyedContainer()
+        self.validator = try container.decode(String.self)
+        self.value = try container.decode(Value.self)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.unkeyedContainer()
+        try container.encode(self.validator)
+        try container.encode(self.value)
+    }
+}
+
+/// `block_qc_certificate` (HF16): >2/3 of scheduled validators signed the parent block.
+public struct BlockQuorumCertificate: Codable, Equatable, Sendable {
+    public let blockNum: UInt32
+    public let blockId: BlockId
+    public let round: UInt32
+    public let signatures: [ValidatorEntry<Signature>]
+}
+
+/// `block_timeout_vote` (HF16).
+public struct BlockTimeoutVote: Codable, Equatable, Sendable {
+    public let highQcRound: UInt32
+    public let signature: Signature
+}
+
+/// `block_timeout_certificate` (HF16): a quorum of validators gave up on `round`.
+public struct BlockTimeoutCertificate: Codable, Equatable, Sendable {
+    public let round: UInt32
+    public let votes: [ValidatorEntry<BlockTimeoutVote>]
+}
+
+/// `block_timeout_vote_v2` (HF18): the vote also names the block certified at `highQcRound`.
+public struct BlockTimeoutVoteV2: Codable, Equatable, Sendable {
+    public let highQcRound: UInt32
+    public let highQcBlockId: BlockId
+    public let signature: Signature
+}
+
+/// `block_timeout_certificate_v2` (HF18).
+public struct BlockTimeoutCertificateV2: Codable, Equatable, Sendable {
+    public let round: UInt32
+    public let votes: [ValidatorEntry<BlockTimeoutVoteV2>]
+}
+
+/// `block_vote_evidence`: one signed block vote, as gossiped.
+public struct BlockVoteEvidence: Codable, Equatable, Sendable {
+    public let blockNum: UInt32
+    public let blockId: BlockId
+    public let signature: Signature
+}
+
+/// `block_equivocation_proof` (HF16).
+public struct BlockEquivocationProof: Codable, Equatable, Sendable {
+    public let validator: String
+    public let round: UInt32
+    public let first: BlockVoteEvidence
+    public let second: BlockVoteEvidence
 }
 
 /// Internal protocol for a block header.
@@ -166,12 +245,29 @@ public struct SignedBlock: _BlockHeader, Equatable, Sendable {
 }
 
 extension BlockExtension: Codable {
+    private struct HardforkVersionVote: Codable {
+        let hfVersion: String
+        let hfTime: Date
+    }
+
+    // Tags are the node's `block_header_extensions` static_variant indexes (append-only wire format).
     public init(from decoder: Decoder) throws {
         var container = try decoder.unkeyedContainer()
         let type = try container.decode(Int.self)
         switch type {
         case 1:
             self = .version(try container.decode(String.self))
+        case 2:
+            let vote = try container.decode(HardforkVersionVote.self)
+            self = .hardforkVersionVote(vote.hfVersion, vote.hfTime)
+        case 3:
+            self = .quorumCertificate(try container.decode(BlockQuorumCertificate.self))
+        case 4:
+            self = .timeoutCertificate(try container.decode(BlockTimeoutCertificate.self))
+        case 5:
+            self = .equivocationProof(try container.decode(BlockEquivocationProof.self))
+        case 6:
+            self = .timeoutCertificateV2(try container.decode(BlockTimeoutCertificateV2.self))
         default:
             self = .unknown
         }
@@ -183,7 +279,22 @@ extension BlockExtension: Codable {
         case let .version(version):
             try container.encode(1 as Int)
             try container.encode(version)
-        default:
+        case let .hardforkVersionVote(version, time):
+            try container.encode(2 as Int)
+            try container.encode(HardforkVersionVote(hfVersion: version, hfTime: time))
+        case let .quorumCertificate(value):
+            try container.encode(3 as Int)
+            try container.encode(value)
+        case let .timeoutCertificate(value):
+            try container.encode(4 as Int)
+            try container.encode(value)
+        case let .equivocationProof(value):
+            try container.encode(5 as Int)
+            try container.encode(value)
+        case let .timeoutCertificateV2(value):
+            try container.encode(6 as Int)
+            try container.encode(value)
+        case .unknown:
             break
         }
     }

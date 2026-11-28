@@ -217,12 +217,18 @@ final class APITest: XCTestCase {
           "last_irreversible_block_num": 0,
           "max_virtual_bandwidth": "0",
           "current_reserve_ratio": 0,
-          "vote_regeneration_per_day": 0
+          "vote_regeneration_per_day": 0,
+          "round_anchor_time": "2026-10-31T00:00:00",
+          "round_anchor_round": 597801600,
+          "emergency_schedule_size_on_entry": 21
         }
         """
         let dgp = try TestDecode(API.DynamicGlobalProperties.self, json: json)
         XCTAssertEqual(dgp.currentValidator, "alice")
         XCTAssertEqual(dgp.inflationValidatorPercent, 1500)
+        XCTAssertEqual(dgp.roundAnchorTime, Date(timeIntervalSince1970: 1_793_404_800))
+        XCTAssertEqual(dgp.roundAnchorRound, 597_801_600)
+        XCTAssertEqual(dgp.emergencyScheduleSizeOnEntry, 21)
     }
 
     func testDynamicGlobalProperties_decodesLegacyKeys() throws {

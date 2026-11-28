@@ -27,7 +27,57 @@ class BlockTest: XCTestCase {
         XCTAssertEqual(block.validator, "steempty")
         XCTAssertEqual(block.validatorSignature, Signature("1f26706cb7da8528a303f55c7e260b8b43ba2aaddb2970d01563f5b1d1dc1d8e0342e4afe22e95277d37b4e7a429df499771f8db064e64aa964a0ba4a17a18fb2b"))
     }
+
+    // Tags 1-6 of the node's block_header_extensions; shapes mirror viz-js-lib hf16/hf18 tests
+    // and a live HF18 header.
+    func testBlockExtensions_hf16hf18() throws {
+        let header = try TestDecode(SignedBlockHeader.self, json: headerWithExtensions)
+        let id = try TestDecode(BlockId.self, string: blockIdHex)
+        let sig = Signature(sigHex)!
+        let evidence = BlockVoteEvidence(blockNum: 7, blockId: id, signature: sig)
+        let expected: [BlockExtension] = [
+            .version("4.2.0"),
+            .hardforkVersionVote("4.2.0", Date(timeIntervalSince1970: 1_793_404_800)),
+            .quorumCertificate(BlockQuorumCertificate(blockNum: 7, blockId: id, round: 8, signatures: [ValidatorEntry(validator: "alice", value: sig)])),
+            .timeoutCertificate(BlockTimeoutCertificate(round: 8, votes: [ValidatorEntry(validator: "alice", value: BlockTimeoutVote(highQcRound: 6, signature: sig))])),
+            .equivocationProof(BlockEquivocationProof(validator: "alice", round: 8, first: evidence, second: evidence)),
+            .timeoutCertificateV2(BlockTimeoutCertificateV2(round: 8, votes: [ValidatorEntry(validator: "alice", value: BlockTimeoutVoteV2(highQcRound: 6, highQcBlockId: id, signature: sig))])),
+            .unknown,
+        ]
+        XCTAssertEqual(header.extensions, expected)
+
+        // JSON round trip keeps every known extension and the node's key names.
+        let known = Array(expected.dropLast())
+        let data = try Client.JSONEncoder().encode(known)
+        XCTAssertEqual(try TestDecode([BlockExtension].self, json: data), known)
+        let json = String(data: data, encoding: .utf8)!
+        for key in ["hf_version", "hf_time", "block_num", "block_id", "high_qc_round", "high_qc_block_id"] {
+            XCTAssertTrue(json.contains("\"\(key)\""), "missing \(key)")
+        }
+    }
 }
+
+fileprivate let blockIdHex = "052fd48f051dac071eaea5c23e93b6a34f019bdb"
+fileprivate let sigHex = "2027d0dc18f72841fe912b6cc856db21b99421d6941ceafaa8eccbea6aa09021db1aa3bdc9a1e4d1c65aeaea6cae2372705c14215ec442ef801f45131903f9ddea"
+fileprivate let evidenceJSON = "{\"block_num\":7,\"block_id\":\"\(blockIdHex)\",\"signature\":\"\(sigHex)\"}"
+fileprivate let headerWithExtensions = """
+{
+  "previous": "052fd48f051dac071eaea5c23e93b6a34f019bdb",
+  "timestamp": "2026-11-27T17:53:19",
+  "validator": "m0ssa99",
+  "transaction_merkle_root": "0000000000000000000000000000000000000000",
+  "extensions": [
+    [1, "4.2.0"],
+    [2, {"hf_version": "4.2.0", "hf_time": "2026-10-31T00:00:00"}],
+    [3, {"block_num": 7, "block_id": "\(blockIdHex)", "round": 8, "signatures": [["alice", "\(sigHex)"]]}],
+    [4, {"round": 8, "votes": [["alice", {"high_qc_round": 6, "signature": "\(sigHex)"}]]}],
+    [5, {"validator": "alice", "round": 8, "first": \(evidenceJSON), "second": \(evidenceJSON)}],
+    [6, {"round": 8, "votes": [["alice", {"high_qc_round": 6, "high_qc_block_id": "\(blockIdHex)", "signature": "\(sigHex)"}]]}],
+    [7, {"future": true}]
+  ],
+  "validator_signature": "\(sigHex)"
+}
+"""
 
 // Legacy JSON: uses "witness" / "witness_signature".
 fileprivate let block2000000_legacy = """

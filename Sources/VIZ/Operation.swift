@@ -1995,6 +1995,17 @@ public struct Operation {
         }
     }
 
+    // MARK: HF16
+
+    /// `validator_equivocation` (op 106): a block header proved `validator` voted for two blocks in `round`.
+    public struct ValidatorEquivocation: OperationType, Equatable {
+        public var isVirtual: Bool { return true }
+        public let validator: String
+        public let round: UInt32
+        public let firstBlockId: BlockId
+        public let secondBlockId: BlockId
+    }
+
     /// Unknown operation, seen if the decoder encounters operation which has no type defined.
     /// - Note: Not encodable, the encoder will throw if encountering this operation.
     public struct Unknown: OperationType, Equatable {}
@@ -2110,6 +2121,7 @@ fileprivate enum OperationId: UInt8, VIZEncodable, Decodable {
     case pm_early_exit_claim_paid = 103
     case pm_lp_payout = 104
     case set_agent_permission = 105
+    case validator_equivocation = 106
     case unknown = 255
 
     init(from decoder: Decoder) throws {
@@ -2204,6 +2216,7 @@ fileprivate enum OperationId: UInt8, VIZEncodable, Decodable {
         case "pm_early_exit_claim_paid": self = .pm_early_exit_claim_paid
         case "pm_lp_payout": self = .pm_lp_payout
         case "set_agent_permission": self = .set_agent_permission
+        case "validator_equivocation": self = .validator_equivocation
         default: self = .unknown
         }
     }
@@ -2342,6 +2355,7 @@ internal struct AnyOperation: VIZEncodable, Decodable, Sendable {
         case .pm_early_exit_claim_paid: op = try container.decode(Operation.PmEarlyExitClaimPaid.self)
         case .pm_lp_payout: op = try container.decode(Operation.PmLpPayout.self)
         case .set_agent_permission: op = try container.decode(Operation.SetAgentPermission.self)
+        case .validator_equivocation: op = try container.decode(Operation.ValidatorEquivocation.self)
         case .unknown: op = Operation.Unknown()
         }
         self.operation = op

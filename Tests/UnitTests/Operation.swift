@@ -1220,4 +1220,14 @@ class OperationTest: XCTestCase {
             Operation.PmLpPayout(account: "lp", marketId: 42, principal: Asset("500.000 VIZ")!, income: Asset("5.000 VIZ")!, charge: Asset("0.100 VIZ")!)
         )
     }
+
+    func testVirtualDecode_validatorEquivocation() throws {
+        let any = try TestDecode(AnyOperation.self, json: "[\"validator_equivocation\",{\"validator\":\"alice\",\"round\":8,\"first_block_id\":\"052fd48f051dac071eaea5c23e93b6a34f019bdb\",\"second_block_id\":\"052fd48f72aa77c5a48439cc8d7319af20177a4e\"}]")
+        let op = try XCTUnwrap(any.operation as? VIZ.Operation.ValidatorEquivocation)
+        XCTAssertTrue(op.isVirtual)
+        XCTAssertEqual(op.validator, "alice")
+        XCTAssertEqual(op.round, 8)
+        XCTAssertEqual(op.firstBlockId.num, 87_020_687)
+        XCTAssertEqual(op.secondBlockId.hash, Data(hexEncoded: "052fd48f72aa77c5a48439cc8d7319af20177a4e"))
+    }
 }
